@@ -13,7 +13,9 @@ dependencies = [
     "chromadb",
     "langchain-community",
     "langchain-text-splitters",
-    "sentence-transformers",
     "streamlit",
-    "reportlab"
+    "reportlab",
+    "langchain-google-genai",
+    "google-generativeai",
+    "langchain-chroma"
 ]

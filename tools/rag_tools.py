@@ -1,7 +1,11 @@
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+#from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CHROMA_DIR = str(BASE_DIR / "chroma_db")
@@ -18,11 +22,11 @@ def get_vector_store():
     
 
     if _vector_store is None:
-        print("Loading HuggingFace model...")
-        _embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        print("Loading Gemini model...")
+        _embeddings = GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001"
         )
-        print("Embedding model loaded.")
+        print("Gemini Embedding model loaded.")
 
         _vector_store = Chroma(
             persist_directory=CHROMA_DIR,

@@ -3,8 +3,12 @@ from pathlib import Path
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 DATA_DIR = "data"
@@ -41,15 +45,15 @@ def split_documents(documents):
 
 def create_vector_store(chunks):
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    embeddings = GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001"
+        )
 
     vector_store = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory=CHROMA_DIR
-    )
+            documents=chunks,
+            embedding=embeddings,
+            persist_directory=CHROMA_DIR
+        )
 
     print(f"\nStored {len(chunks)} chunks in Chroma")
 
