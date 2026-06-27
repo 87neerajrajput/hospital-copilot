@@ -8,7 +8,7 @@ from graph.workflow import build_graph
 
 from utils.pdf_generator import generate_pdf
 
-from tools.db_tools import search_patients, get_patient, get_patient_plans, get_therapy_plan
+from tools.db_tools import initialize_database, search_patients, get_patient, get_patient_plans, get_therapy_plan
 
 
 
@@ -20,6 +20,14 @@ st.set_page_config(
     page_title="Paravartan Healthcare Copilot",
     layout="wide"
 )
+
+
+@st.cache_resource
+def initialize_app():
+    initialize_database()
+
+initialize_app()
+
 
 st.title("🏥 Paravartan Healthcare Copilot")
 

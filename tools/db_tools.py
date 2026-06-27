@@ -23,6 +23,74 @@ def get_connection():
     return conn
 
 
+def initialize_database():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS patients (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        age INTEGER NOT NULL,
+        diagnosis TEXT,
+        concerns TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS therapy_plans (
+        id SERIAL PRIMARY KEY,
+        patient_id INTEGER NOT NULL,
+        plan JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        CONSTRAINT fk_therapy_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(id)
+        ON DELETE CASCADE
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reports (
+        id SERIAL PRIMARY KEY,
+        patient_id INTEGER NOT NULL,
+        report_type VARCHAR(50) NOT NULL,
+        report_content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        CONSTRAINT fk_report_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(id)
+        ON DELETE CASCADE
+    );
+    """)
+
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_patients_name
+    ON patients(name);
+    """)
+
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_therapy_patient
+    ON therapy_plans(patient_id);
+    """)
+
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_reports_patient
+    ON reports(patient_id);
+    """)
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    print("Database initialized successfully.")
+    
+
 def save_patient(patient_info):
 
     conn = get_connection()
