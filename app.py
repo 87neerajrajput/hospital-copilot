@@ -92,6 +92,13 @@ if "search_message" not in st.session_state:
 if "screen_mode" not in st.session_state:
     st.session_state.screen_mode = "workspace"
 
+# Added for chat context
+if "therapy_plan" not in st.session_state:
+    st.session_state.therapy_plan = None
+
+if "therapy_plan_summary" not in st.session_state:
+    st.session_state.therapy_plan_summary = None
+
 
 
 def reset_application():
@@ -101,6 +108,10 @@ def reset_application():
     # Reinitialize only the values that must exist
     st.session_state.thread_id = str(uuid.uuid4())
     st.session_state.screen_mode = "workspace"
+
+    # For Chat Feature
+    st.session_state.therapy_plan = None
+    st.session_state.therapy_plan_summary = None
 
     # st.session_state.thread_id = str(uuid.uuid4())
 
@@ -124,6 +135,81 @@ def reset_application():
     # st.session_state.reports_generated = False
 
     # st.session_state.screen_mode = "workspace"
+
+
+# -----------------------------------------
+# Therapy plan summary for chat context
+# -----------------------------------------
+
+def summarize_therapy_plan(plan):
+    print('plan: \n' ,plan)
+
+    if not plan:
+        return None
+
+    therapy = plan.get("therapy_plan", {})
+
+    summary = []
+
+    # -----------------------------------------
+    # Therapy Goals
+    # -----------------------------------------
+
+    goals = therapy.get("therapy_goals", [])
+
+    if goals:
+
+        summary.append("THERAPY GOALS:")
+
+        for goal in goals:
+            summary.append(f"- {goal}")
+
+        summary.append("")
+
+    # -----------------------------------------
+    # Weekly Schedule
+    # -----------------------------------------
+
+    weekly_schedule = therapy.get(
+        "weekly_schedule",
+        []
+    )
+
+    if weekly_schedule:
+
+        summary.append("WEEKLY PLAN:")
+
+        for week in weekly_schedule:
+
+            summary.append(
+                f"{week['week']} "
+                f"({week['focus_area']})"
+            )
+
+        summary.append("")
+
+    # -----------------------------------------
+    # Home Program
+    # -----------------------------------------
+
+    home_program = therapy.get(
+        "home_program",
+        []
+    )
+
+    if home_program:
+
+        summary.append("HOME PROGRAM:")
+
+        for activity in home_program:
+
+            summary.append(
+                f"- {activity['activity_name']} "
+                f"({activity['recommended_frequency']})"
+            )
+
+    return "\n".join(summary)
+
 
 # ==========================================
 # PATIENT MANAGEMENT
@@ -301,6 +387,12 @@ if st.session_state.selected_patient_id:
             plan = get_therapy_plan(plan_id)
 
             st.session_state.selected_plan = plan["therapy_plan"]
+
+            # For chat context
+            st.session_state.therapy_plan = plan["therapy_plan"]
+            st.session_state.therapy_plan_summary = (
+                summarize_therapy_plan(plan)
+            )
 
             patient = plan["patient_info"]
 
@@ -640,6 +732,21 @@ with left_col:
             therapy_plan = state.get("therapy_plan")
 
             if therapy_plan:
+
+                # -----------------------------------
+                # Save current therapy plan for AI Chat
+                # -----------------------------------
+
+                st.session_state.therapy_plan = therapy_plan
+
+                st.session_state.therapy_plan_summary = (
+                    summarize_therapy_plan(
+                        {
+                            "therapy_plan": therapy_plan
+                        }
+                    )
+                )
+
 
                 st.divider()
 

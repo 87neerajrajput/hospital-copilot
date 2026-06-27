@@ -1,4 +1,5 @@
 import streamlit as st
+
 from assistants.chat_assistant import ask_ai
 
 CHAT_HEIGHT = 650
@@ -9,10 +10,13 @@ def render_chat():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # Outer Card
+    # ==========================================
+    # OUTER CARD
+    # ==========================================
+
     with st.container(border=True):
 
-        # ---------------- Header ----------------
+        # ---------- Header ----------
 
         col1, col2 = st.columns([5, 1])
 
@@ -25,7 +29,7 @@ def render_chat():
 
             if st.button(
                 "🗑️",
-                help="Clear Chat",
+                help="New Chat",
                 use_container_width=True,
             ):
                 st.session_state.chat_history = []
@@ -33,7 +37,7 @@ def render_chat():
 
         st.divider()
 
-        # --------------- Chat Window ----------------
+        # ---------- Chat Window ----------
 
         chat_window = st.container(
             height=CHAT_HEIGHT,
@@ -53,17 +57,22 @@ def render_chat():
             for msg in st.session_state.chat_history:
 
                 with st.chat_message(msg["role"]):
+
                     st.markdown(msg["content"])
 
         st.divider()
 
-        # --------------- Chat Input ----------------
+        # ---------- Chat Input ----------
 
         prompt = st.chat_input(
             "Ask the AI Therapist..."
         )
 
         if prompt:
+
+            # -----------------------------------
+            # Show User Message
+            # -----------------------------------
 
             st.session_state.chat_history.append(
                 {
@@ -72,8 +81,44 @@ def render_chat():
                 }
             )
 
+            # -----------------------------------
+            # Build Patient Context
+            # -----------------------------------
+
+            patient = None
+
+            if st.session_state.selected_patient_id:
+
+                patient = {
+
+                    "name": st.session_state.patient_name,
+
+                    "age": st.session_state.age,
+
+                    "diagnosis": st.session_state.diagnosis,
+
+                    "concerns": (
+                        st.session_state
+                        .primary_concerns
+                        .split("\n")
+                    ),
+
+                    "therapy_plan": (
+                        st.session_state
+                        .therapy_plan_summary
+                    )
+                }
+
+            # -----------------------------------
+            # AI Response
+            # -----------------------------------
+
             with st.spinner("Thinking..."):
-                answer = ask_ai(prompt, st.session_state.chat_history)
+
+                answer = ask_ai(
+                    question=prompt,
+                    patient=patient,
+                )
 
             st.session_state.chat_history.append(
                 {
