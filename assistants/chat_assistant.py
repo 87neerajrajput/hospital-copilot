@@ -7,8 +7,14 @@ from langchain_core.messages import (
 
 from langchain_groq import ChatGroq
 
+from tools.rag_tools import retrieve_context
+
 load_dotenv()
 
+
+# ==========================================================
+# LLM
+# ==========================================================
 
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
@@ -16,96 +22,157 @@ llm = ChatGroq(
 )
 
 
+# ==========================================================
+# SYSTEM PROMPT
+# ==========================================================
+
 SYSTEM_PROMPT = """
 You are an expert Occupational Therapist AI Assistant.
 
-Your role is to assist therapists during clinical decision making.
-
-You have expertise in:
-
-- Autism Spectrum Disorder
-- ADHD
-- Cerebral Palsy
-- Down Syndrome
-- Sensory Integration
-- Feeding Therapy
-- Speech & Language Therapy
-- School Readiness
-- Fine Motor Skills
-- Gross Motor Skills
+Your role is to support therapists in clinical decision making.
 
 Guidelines:
 
-- Use the current patient information whenever available.
+- Use the patient's clinical information whenever available.
 - Use the current therapy plan summary whenever available.
+- Use the retrieved clinical knowledge as the primary source of truth.
+- If retrieved knowledge conflicts with your general knowledge, prioritize the retrieved knowledge.
 - Never invent patient information.
 - Never diagnose a patient.
-- Never contradict the existing therapy plan unless explicitly asked.
-- When suggesting new activities, ensure they complement the current therapy plan.
-- Give practical, evidence-informed recommendations.
+- Never contradict the current therapy plan unless the therapist explicitly asks for alternatives.
+- When suggesting activities, ensure they complement the existing therapy plan.
+- Keep answers practical, evidence-informed, and concise.
 - Use bullet points whenever appropriate.
-- Keep answers concise and clinically useful.
 """
 
+
+# ==========================================================
+# PATIENT CONTEXT
+# ==========================================================
 
 def build_patient_context(patient):
 
     if patient is None:
+
         return """
-        Current Patient
+Current Patient
 
-        No patient is currently loaded.
+No patient is currently loaded.
 
-        Answer as a general Occupational Therapy assistant.
-        """
+Answer as a general Occupational Therapy assistant.
+"""
 
     concerns = patient.get("concerns", [])
 
     if isinstance(concerns, list):
         concerns = ", ".join(concerns)
 
-    therapy_plan = patient.get("therapy_plan")
+    therapy_summary = patient.get("therapy_plan", "")
 
     context = f"""
-    Current Patient
+Current Patient
 
-    Name:
-    {patient.get("name")}
+Name:
+{patient.get("name")}
 
-    Age:
-    {patient.get("age")}
+Age:
+{patient.get("age")}
 
-    Diagnosis:
-    {patient.get("diagnosis")}
+Diagnosis:
+{patient.get("diagnosis")}
 
-    Primary Concerns:
-    {concerns}
-    """
+Primary Concerns:
+{concerns}
+"""
 
-    if therapy_plan:
+    if therapy_summary:
 
         context += f"""
 
-        Current Therapy Plan Summary:
+Current Therapy Plan Summary
 
-        {therapy_plan}
-        """
+{therapy_summary}
+"""
 
     else:
 
         context += """
 
-        Current Therapy Plan Summary:
+Current Therapy Plan Summary
 
-        No therapy plan has been generated yet.
-        """
+No therapy plan has been generated yet.
+"""
 
     return context
 
 
-def ask_ai(question: str, patient=None):
+# ==========================================================
+# BUILD RAG QUERY
+# ==========================================================
+
+def build_rag_query(question, patient):
+
+    if patient is None:
+        return question
+
+    concerns = patient.get("concerns", [])
+
+    if isinstance(concerns, list):
+        concerns = ", ".join(concerns)
+
+    return f"""
+Diagnosis:
+{patient.get("diagnosis")}
+
+Primary Concerns:
+{concerns}
+
+Therapist Question:
+{question}
+"""
+
+
+# ==========================================================
+# BUILD CLINICAL KNOWLEDGE
+# ==========================================================
+
+def build_rag_context(question, patient):
+
+    query = build_rag_query(question, patient)
+
+    docs = retrieve_context(
+        query=query,
+        k=3
+    )
+
+    if not docs:
+
+        return "No relevant clinical knowledge found."
+
+    knowledge = "\n\n-----------------------------\n\n".join(docs)
+
+    return f"""
+Retrieved Clinical Knowledge
+
+{knowledge}
+"""
+
+
+# ==========================================================
+# CHAT
+# ==========================================================
+
+def ask_ai(
+    question: str,
+    patient=None,
+):
 
     patient_context = build_patient_context(patient)
+
+    rag_context = build_rag_context(
+        question,
+        patient
+    )
 
     messages = [
 
@@ -115,6 +182,10 @@ def ask_ai(question: str, patient=None):
 
         SystemMessage(
             content=patient_context
+        ),
+
+        SystemMessage(
+            content=rag_context
         ),
 
         HumanMessage(
