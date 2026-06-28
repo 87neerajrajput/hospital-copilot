@@ -99,6 +99,9 @@ if "therapy_plan" not in st.session_state:
 if "therapy_plan_summary" not in st.session_state:
     st.session_state.therapy_plan_summary = None
 
+if "current_patient" not in st.session_state:
+    st.session_state.current_patient = None
+
 
 
 def reset_application():
@@ -336,6 +339,7 @@ if st.sidebar.button("📂 Load Patient"):
 
     # Hide any previously viewed history
     st.session_state.selected_plan = None
+    st.session_state.current_patient = patient
 
     st.rerun()
 
@@ -390,9 +394,18 @@ if st.session_state.selected_patient_id:
 
             # For chat context
             st.session_state.therapy_plan = plan["therapy_plan"]
+
+            therapy_summary = summarize_therapy_plan(plan)
+            
             st.session_state.therapy_plan_summary = (
-                summarize_therapy_plan(plan)
+                therapy_summary
             )
+
+            patient_snapshot = plan["patient_info"].copy()
+
+            patient_snapshot["therapy_plan"] = therapy_summary
+
+            st.session_state.current_patient = patient_snapshot
 
             patient = plan["patient_info"]
 
@@ -678,6 +691,8 @@ with left_col:
 
             st.session_state.plan_generated = True
 
+            print("Selected_patient_id in app : \n",  st.session_state.selected_patient_id)
+
             # Select Plan Dropdown updates automatically without needing to reload the patient.
             if st.session_state.selected_patient_id:
 
@@ -699,6 +714,48 @@ with left_col:
             
             # Check interrupt
             graph_state = graph.get_state(config)
+
+            state_values = graph_state.values
+
+            new_patient_id = graph_state.values.get("patient_id")
+
+            if new_patient_id:
+                st.session_state.selected_patient_id = new_patient_id
+
+            print("**************patient_id in graph***************\n", st.session_state.selected_patient_id)
+
+            if state_values:
+
+                # ==================================
+                # THERAPY PLAN
+                # ==================================
+
+                patient_info = state_values.get("patient_info")
+                therapy_plan = state_values.get("therapy_plan")
+                
+                if patient_info:
+
+                    patient = patient_info.copy()
+                    print("who :\n ", patient)
+
+                    if therapy_plan:
+
+                        # ---------------------------------------------------------------------
+                        # Save current patient info and current therapy plan for AI Chat
+                        # ----------------------------------------------------------------------                    
+
+                        therapy_summary = summarize_therapy_plan(
+                            {
+                                "therapy_plan": therapy_plan
+                            }
+                        )
+
+                        st.session_state.therapy_plan_summary = therapy_summary
+                        patient["therapy_plan"] = therapy_summary
+                        
+                    st.session_state.current_patient = patient
+                    print("who and what : \n",  st.session_state.current_patient)
+
             # st.write("STATE")
             # st.write(graph_state)
 
@@ -730,13 +787,16 @@ with left_col:
             # ==================================
 
             therapy_plan = state.get("therapy_plan")
+            patient_info = state.get("patient_info")
+
 
             if therapy_plan:
 
-                # -----------------------------------
-                # Save current therapy plan for AI Chat
-                # -----------------------------------
+                # ---------------------------------------------------------------------
+                # Save current patient info and current therapy plan for AI Chat
+                # ----------------------------------------------------------------------
 
+                st.session_state.loaded_patient = patient_info.copy()
                 st.session_state.therapy_plan = therapy_plan
 
                 st.session_state.therapy_plan_summary = (

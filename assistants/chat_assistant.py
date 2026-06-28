@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
+    AIMessage,
 )
 
 from langchain_groq import ChatGroq
@@ -11,13 +12,19 @@ from tools.rag_tools import retrieve_context
 
 load_dotenv()
 
+# ==========================================================
+# CONFIG
+# ==========================================================
+
+MAX_HISTORY = 6
 
 # ==========================================================
 # LLM
 # ==========================================================
 
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    #model="llama-3.3-70b-versatile",
+    model="llama-3.1-8b-instant",
     temperature=0.3,
 )
 
@@ -29,7 +36,7 @@ llm = ChatGroq(
 SYSTEM_PROMPT = """
 You are an expert Occupational Therapist AI Assistant.
 
-Your role is to support therapists in clinical decision making.
+Your role is to support therapists during clinical decision making.
 
 Guidelines:
 
@@ -37,12 +44,20 @@ Guidelines:
 - Use the current therapy plan summary whenever available.
 - Use the retrieved clinical knowledge as the primary source of truth.
 - If retrieved knowledge conflicts with your general knowledge, prioritize the retrieved knowledge.
+
+- Use previous conversation whenever it is relevant.
+
 - Never invent patient information.
 - Never diagnose a patient.
+
 - Never contradict the current therapy plan unless the therapist explicitly asks for alternatives.
-- When suggesting activities, ensure they complement the existing therapy plan.
-- Keep answers practical, evidence-informed, and concise.
+
+- When suggesting new activities, ensure they complement the existing therapy plan.
+
+- Keep answers practical, evidence-informed and concise.
+
 - Use bullet points whenever appropriate.
+
 """
 
 
@@ -55,12 +70,12 @@ def build_patient_context(patient):
     if patient is None:
 
         return """
-Current Patient
+        Current Patient
 
-No patient is currently loaded.
+        No patient is currently loaded.
 
-Answer as a general Occupational Therapy assistant.
-"""
+        Answer as a general Occupational Therapy assistant.
+        """
 
     concerns = patient.get("concerns", [])
 
@@ -70,38 +85,38 @@ Answer as a general Occupational Therapy assistant.
     therapy_summary = patient.get("therapy_plan", "")
 
     context = f"""
-Current Patient
+    Current Patient
 
-Name:
-{patient.get("name")}
+    Name:
+    {patient.get("name")}
 
-Age:
-{patient.get("age")}
+    Age:
+    {patient.get("age")}
 
-Diagnosis:
-{patient.get("diagnosis")}
+    Diagnosis:
+    {patient.get("diagnosis")}
 
-Primary Concerns:
-{concerns}
-"""
+    Primary Concerns:
+    {concerns}
+    """
 
     if therapy_summary:
 
         context += f"""
 
-Current Therapy Plan Summary
+        Current Therapy Plan Summary
 
-{therapy_summary}
-"""
+        {therapy_summary}
+        """
 
     else:
 
         context += """
 
-Current Therapy Plan Summary
+        Current Therapy Plan Summary
 
-No therapy plan has been generated yet.
-"""
+        No therapy plan has been generated yet.
+        """
 
     return context
 
@@ -121,19 +136,19 @@ def build_rag_query(question, patient):
         concerns = ", ".join(concerns)
 
     return f"""
-Diagnosis:
-{patient.get("diagnosis")}
+    Diagnosis:
+    {patient.get("diagnosis")}
 
-Primary Concerns:
-{concerns}
+    Primary Concerns:
+    {concerns}
 
-Therapist Question:
-{question}
-"""
+    Therapist Question:
+    {question}
+    """
 
 
 # ==========================================================
-# BUILD CLINICAL KNOWLEDGE
+# BUILD RAG CLINICAL KNOWLEDGE
 # ==========================================================
 
 def build_rag_context(question, patient):
@@ -152,10 +167,43 @@ def build_rag_context(question, patient):
     knowledge = "\n\n-----------------------------\n\n".join(docs)
 
     return f"""
-Retrieved Clinical Knowledge
+    Retrieved Clinical Knowledge
 
-{knowledge}
-"""
+    {knowledge}
+    """
+
+# ==========================================================
+# BUILD CHAT HISTORY
+# ==========================================================
+
+def build_chat_history(messages):
+
+    history = []
+
+    if not messages:
+        return history
+
+    recent_messages = messages[-MAX_HISTORY:]
+
+    for message in recent_messages:
+
+        if message["role"] == "user":
+
+            history.append(
+                HumanMessage(
+                    content=message["content"]
+                )
+            )
+
+        elif message["role"] == "assistant":
+
+            history.append(
+                AIMessage(
+                    content=message["content"]
+                )
+            )
+
+    return history
 
 
 # ==========================================================
@@ -165,6 +213,7 @@ Retrieved Clinical Knowledge
 def ask_ai(
     question: str,
     patient=None,
+    chat_history=None,
 ):
 
     patient_context = build_patient_context(patient)
@@ -187,11 +236,18 @@ def ask_ai(
         SystemMessage(
             content=rag_context
         ),
+    ]
 
+    messages.extend(
+        build_chat_history(chat_history)
+    )
+
+    # Current Question
+    messages.append(
         HumanMessage(
             content=question
-        ),
-    ]
+        )
+    )
 
     response = llm.invoke(messages)
 
