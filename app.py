@@ -10,6 +10,8 @@ from utils.pdf_generator import generate_pdf
 
 from tools.db_tools import initialize_database, search_patients, get_patient, get_patient_plans, get_therapy_plan
 
+from assistants.therapist_chat import render_chat
+
 
 
 # ==========================================
@@ -22,11 +24,11 @@ st.set_page_config(
 )
 
 
-@st.cache_resource
-def initialize_app():
-    initialize_database()
+# @st.cache_resource
+# def initialize_app():
+#     initialize_database()
 
-initialize_app()
+# initialize_app()
 
 
 st.title("🏥 Paravartan Healthcare Copilot")
@@ -90,6 +92,16 @@ if "search_message" not in st.session_state:
 if "screen_mode" not in st.session_state:
     st.session_state.screen_mode = "workspace"
 
+# Added for chat context
+if "therapy_plan" not in st.session_state:
+    st.session_state.therapy_plan = None
+
+if "therapy_plan_summary" not in st.session_state:
+    st.session_state.therapy_plan_summary = None
+
+if "current_patient" not in st.session_state:
+    st.session_state.current_patient = None
+
 
 
 def reset_application():
@@ -99,6 +111,10 @@ def reset_application():
     # Reinitialize only the values that must exist
     st.session_state.thread_id = str(uuid.uuid4())
     st.session_state.screen_mode = "workspace"
+
+    # For Chat Feature
+    st.session_state.therapy_plan = None
+    st.session_state.therapy_plan_summary = None
 
     # st.session_state.thread_id = str(uuid.uuid4())
 
@@ -122,6 +138,81 @@ def reset_application():
     # st.session_state.reports_generated = False
 
     # st.session_state.screen_mode = "workspace"
+
+
+# -----------------------------------------
+# Therapy plan summary for chat context
+# -----------------------------------------
+
+def summarize_therapy_plan(plan):
+    print('plan: \n' ,plan)
+
+    if not plan:
+        return None
+
+    therapy = plan.get("therapy_plan", {})
+
+    summary = []
+
+    # -----------------------------------------
+    # Therapy Goals
+    # -----------------------------------------
+
+    goals = therapy.get("therapy_goals", [])
+
+    if goals:
+
+        summary.append("THERAPY GOALS:")
+
+        for goal in goals:
+            summary.append(f"- {goal}")
+
+        summary.append("")
+
+    # -----------------------------------------
+    # Weekly Schedule
+    # -----------------------------------------
+
+    weekly_schedule = therapy.get(
+        "weekly_schedule",
+        []
+    )
+
+    if weekly_schedule:
+
+        summary.append("WEEKLY PLAN:")
+
+        for week in weekly_schedule:
+
+            summary.append(
+                f"{week['week']} "
+                f"({week['focus_area']})"
+            )
+
+        summary.append("")
+
+    # -----------------------------------------
+    # Home Program
+    # -----------------------------------------
+
+    home_program = therapy.get(
+        "home_program",
+        []
+    )
+
+    if home_program:
+
+        summary.append("HOME PROGRAM:")
+
+        for activity in home_program:
+
+            summary.append(
+                f"- {activity['activity_name']} "
+                f"({activity['recommended_frequency']})"
+            )
+
+    return "\n".join(summary)
+
 
 # ==========================================
 # PATIENT MANAGEMENT
@@ -248,6 +339,7 @@ if st.sidebar.button("📂 Load Patient"):
 
     # Hide any previously viewed history
     st.session_state.selected_plan = None
+    st.session_state.current_patient = patient
 
     st.rerun()
 
@@ -299,6 +391,21 @@ if st.session_state.selected_patient_id:
             plan = get_therapy_plan(plan_id)
 
             st.session_state.selected_plan = plan["therapy_plan"]
+
+            # For chat context
+            st.session_state.therapy_plan = plan["therapy_plan"]
+
+            therapy_summary = summarize_therapy_plan(plan)
+            
+            st.session_state.therapy_plan_summary = (
+                therapy_summary
+            )
+
+            patient_snapshot = plan["patient_info"].copy()
+
+            patient_snapshot["therapy_plan"] = therapy_summary
+
+            st.session_state.current_patient = patient_snapshot
 
             patient = plan["patient_info"]
 
@@ -380,585 +487,660 @@ if st.session_state.loaded_patient:
 
 
 
-# ==========================================
-# PATIENT INTAKE
-# ==========================================
-
-st.header("👤 Patient Intake")
-
-patient_name = st.text_input(
-    "Patient Name",
-    key="patient_name"
+left_col, right_col = st.columns(
+    [3, 1],
+    gap="small"
 )
 
-age = st.number_input(
-    "Age",
-    min_value=0,
-    max_value=18,
-    key="age"
-)
+with left_col:
 
-diagnosis = st.text_input(
-    "Diagnosis",
-    key="diagnosis"
-)
+    # ==========================================
+    # PATIENT INTAKE
+    # ==========================================
 
-concerns = st.text_area(
-    "Primary Concerns",
-    key="primary_concerns"
-)
+    st.header("👤 Patient Intake")
 
-
-# ==========================================
-# DISPLAY PREVIOUS THERAPY PLAN
-# ==========================================
-
-if (st.session_state.screen_mode == "history" and 
-    st.session_state.selected_plan):
-
-    previous_plan = (
-        st.session_state.selected_plan
+    patient_name = st.text_input(
+        "Patient Name",
+        key="patient_name"
     )
 
-    st.header(
-        "📋 Previous Therapy Plan"
+    age = st.number_input(
+        "Age",
+        min_value=0,
+        max_value=18,
+        key="age"
     )
 
-    # ======================================
-    # THERAPY GOALS
-    # ======================================
-
-    st.subheader(
-        "🎯 Therapy Goals"
+    diagnosis = st.text_input(
+        "Diagnosis",
+        key="diagnosis"
     )
 
-    for goal in previous_plan[
-        "therapy_goals"
-    ]:
+    concerns = st.text_area(
+        "Primary Concerns",
+        key="primary_concerns"
+    )
 
-        st.write(
-            f"• {goal}"
+
+    # ==========================================
+    # DISPLAY PREVIOUS THERAPY PLAN
+    # ==========================================
+
+    if (st.session_state.screen_mode == "history" and 
+        st.session_state.selected_plan):
+
+        previous_plan = (
+            st.session_state.selected_plan
         )
 
-    # ======================================
-    # WEEKLY THERAPY SCHEDULE
-    # ======================================
-
-    st.subheader(
-        "📅 Weekly Therapy Schedule"
-    )
-
-    with st.expander(
-        "View Weekly Therapy Schedule"
-    ):
-
-        for week in previous_plan[
-            "weekly_schedule"
-        ]:
-
-            st.markdown(
-                f"### {week['week']}"
-            )
-
-            st.write(
-                f"**Focus Area:** "
-                f"{week['focus_area']}"
-            )
-
-            st.write(
-                "**Activities:**"
-            )
-
-            for activity in week[
-                "activities"
-            ]:
-
-                st.write(
-                    f"• {activity}"
-                )
-
-            st.write(
-                f"**Expected Outcome:** "
-                f"{week['expected_outcome']}"
-            )
-
-            st.divider()
-
-    # ======================================
-    # HOME PROGRAM
-    # ======================================
-
-    st.subheader(
-        "🏠 Home Program Suggestion"
-    )
-
-    with st.expander(
-        "View Home Program Activities"
-    ):
-
-        for activity in previous_plan[
-            "home_program"
-        ]:
-
-            st.markdown(
-                f"### {activity['activity_name']}"
-            )
-
-            st.write(
-                f"**Instructions:** "
-                f"{activity['instructions']}"
-            )
-
-            st.write(
-                f"**Frequency:** "
-                f"{activity['recommended_frequency']}"
-            )
-
-            st.divider()
-
-
-# ==========================================
-# GENERATE PLAN
-# ==========================================
-
-if st.button("🚀 Generate Therapy Plan"):
-
-    # ----------------------------------
-    # Hide previous history
-    # ----------------------------------
-
-    st.session_state.selected_plan = None
-
-    st.session_state.plan_generated = False
-
-    st.session_state.reports_generated = False
-
-    st.session_state.screen_mode = "workspace"
-    st.session_state.workflow_started = True
-
-    with st.spinner(
-        "Processing patient information, retrieving clinical knowledge, and generating therapy plan..."
-    ):
-
-        initial_state = {
-
-            "user_query": f"""
-            Patient Name: {patient_name}
-            Age: {age}
-            Diagnosis: {diagnosis}
-            Concerns: {concerns}
-            """,
-
-            "patient_info": None,
-            "patient_id": st.session_state.selected_patient_id,
-
-            "retrieved_docs": None,
-
-            "therapy_plan": None,
-            "plan_id": None,
-
-            "qa_result": None,
-
-            "approval_status": None,
-
-            "clinical_report": None,
-            "parent_report": None,
-
-            "clinical_report_id": None,
-            "parent_report_id": None,
-
-            "next_agent": ""
-        }
-
-        result = graph.invoke(
-            initial_state,
-            config=config
+        st.header(
+            "📋 Previous Therapy Plan"
         )
 
-        st.session_state.plan_generated = True
+        # ======================================
+        # THERAPY GOALS
+        # ======================================
 
-        # Select Plan Dropdown updates automatically without needing to reload the patient.
-        if st.session_state.selected_patient_id:
+        st.subheader(
+            "🎯 Therapy Goals"
+        )
 
-            st.session_state.patient_plans = (
-                get_patient_plans(
-                    st.session_state.selected_patient_id
-                )
+        for goal in previous_plan[
+            "therapy_goals"
+        ]:
+
+            st.write(
+                f"• {goal}"
             )
 
-
-        if (st.session_state.screen_mode == "workspace"
-            and st.session_state.plan_generated):
-
-            st.success("✅ Therapy plan generated successfully.")
-
-        
-        # st.write("RESULT")
-        # st.write(result)
-        
-        # Check interrupt
-        graph_state = graph.get_state(config)
-        # st.write("STATE")
-        # st.write(graph_state)
-
-        if graph_state.next:
-            st.session_state.waiting_for_approval = True
-
-        st.rerun()
-
-
-# ==========================================
-# DISPLAY STATE
-# ==========================================
-
-if (
-    st.session_state.workflow_started
-    and st.session_state.screen_mode == "workspace"
-):
-
-    graph_state = graph.get_state(config)
-
-    #st.write(graph_state)
-
-    state = graph_state.values
-
-    if state:
-
-        # ==================================
-        # THERAPY PLAN
-        # ==================================
-
-        therapy_plan = state.get("therapy_plan")
-
-        if therapy_plan:
-
-            st.divider()
-
-            st.header("📋 Therapy Plan")
-
-            # ------------------------------
-            # Goals
-            # ------------------------------
-
-            st.subheader("🎯 Therapy Goals")
-
-            for goal in therapy_plan["therapy_goals"]:
-
-                st.write(f"• {goal}")
-
-            # ------------------------------
-            # Weekly Schedule
-            # ------------------------------
-
-            st.subheader("📅 Weekly Therapy Schedule")
-
-            with st.expander(
-                "View Full 4-Week Therapy Plan",
-                expanded=False
-            ):
-
-                for week_plan in therapy_plan["weekly_schedule"]:
-
-                    st.markdown(
-                        f"### 🗓️ {week_plan['week']}"
-                    )
-
-                    st.markdown(
-                        f"**🎯 Focus Area:** "
-                        f"{week_plan['focus_area']}"
-                    )
-
-                    st.markdown("**🛠️ Activities:**")
-
-                    for activity in week_plan["activities"]:
-                        st.markdown(f"- {activity}")
-
-                    st.info(
-                        f"Expected Outcome: "
-                        f"{week_plan['expected_outcome']}"
-                    )
-
-                    st.divider()
-
-            # ------------------------------
-            # Home Program
-            # ------------------------------
-
-            st.subheader("🏠 Home Program Suggestion")
-
-            with st.expander(
-                "View Home Program Activities",
-                expanded=False
-            ):
-
-                for idx, activity in enumerate(
-                    therapy_plan["home_program"],
-                    start=1
-                ):
-
-                    st.markdown(
-                        f"### 🧩 Activity {idx}: {activity['activity_name']}"
-                    )
-
-                    col1, col2 = st.columns([3, 1])
-
-                    with col1:
-                        st.markdown("**📝 Instructions**")
-                        st.write(activity["instructions"])
-
-                    with col2:
-                        st.markdown("**📅 Recommended Frequency**")
-                        st.success(
-                            activity["recommended_frequency"]
-                        )
-
-                    st.divider()
-
-        # ==================================
-        # QA REVIEW
-        # ==================================
-
-        qa = state.get("qa_result")
-
-        if (st.session_state.screen_mode == "workspace" and qa):
-
-            st.divider()
-
-            st.header("🩺 Clinical Quality Review")
-
-            if qa["status"] == "PASS":
-
-                st.success("PASS")
-
-            else:
-
-                st.error("FAIL")
-
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-
-                st.metric(
-                    "Concern Coverage",
-                    str(
-                        qa["concern_coverage"]
-                    )
-                )
-
-            with col2:
-
-                st.metric(
-                    "Knowledge Base Alignment",
-                    str(
-                        qa["knowledge_alignment"]
-                    )
-                )
-
-            with col3:
-
-                st.metric(
-                    "Completeness",
-                    str(
-                        qa["completeness"]
-                    )
-                )
-
-            st.subheader("🚨 Issues")
-
-            if qa["issues"]:
-
-                for issue in qa["issues"]:
-
-                    st.write(f"• {issue}")
-
-            else:
-
-                st.write("No issues found.")
-
-            st.subheader("📝 Recommendations")
-
-            if qa["suggestions"]:
-
-                for suggestion in qa["suggestions"]:
-
-                    st.write(f"• {suggestion}")
-
-            else:
-
-                st.write("No suggestions.")
-
-        # ==================================
-        # HUMAN REVIEW
-        # ==================================
-
-        if (
-            st.session_state.screen_mode == "workspace"
-            and st.session_state.waiting_for_approval
+        # ======================================
+        # WEEKLY THERAPY SCHEDULE
+        # ======================================
+
+        st.subheader(
+            "📅 Weekly Therapy Schedule"
+        )
+
+        with st.expander(
+            "View Weekly Therapy Schedule"
         ):
 
-            st.divider()
+            for week in previous_plan[
+                "weekly_schedule"
+            ]:
 
-            st.header("👨‍⚕️ Clinical Approval")
+                st.markdown(
+                    f"### {week['week']}"
+                )
 
-            st.info(
-                "Please review the therapy plan and clinical review findings "
-                "before approving the treatment plan."
+                st.write(
+                    f"**Focus Area:** "
+                    f"{week['focus_area']}"
+                )
+
+                st.write(
+                    "**Activities:**"
+                )
+
+                for activity in week[
+                    "activities"
+                ]:
+
+                    st.write(
+                        f"• {activity}"
+                    )
+
+                st.write(
+                    f"**Expected Outcome:** "
+                    f"{week['expected_outcome']}"
+                )
+
+                st.divider()
+
+        # ======================================
+        # HOME PROGRAM
+        # ======================================
+
+        st.subheader(
+            "🏠 Home Program Suggestion"
+        )
+
+        with st.expander(
+            "View Home Program Activities"
+        ):
+
+            for activity in previous_plan[
+                "home_program"
+            ]:
+
+                st.markdown(
+                    f"### {activity['activity_name']}"
+                )
+
+                st.write(
+                    f"**Instructions:** "
+                    f"{activity['instructions']}"
+                )
+
+                st.write(
+                    f"**Frequency:** "
+                    f"{activity['recommended_frequency']}"
+                )
+
+                st.divider()
+
+
+    # ==========================================
+    # GENERATE PLAN
+    # ==========================================
+
+    if st.button("🚀 Generate Therapy Plan"):
+
+        # ----------------------------------
+        # Hide previous history
+        # ----------------------------------
+
+        st.session_state.selected_plan = None
+
+        st.session_state.plan_generated = False
+
+        st.session_state.reports_generated = False
+
+        st.session_state.screen_mode = "workspace"
+        st.session_state.workflow_started = True
+
+        with st.spinner(
+            "Processing patient information, retrieving clinical knowledge, and generating therapy plan..."
+        ):
+
+            initial_state = {
+
+                "user_query": f"""
+                Patient Name: {patient_name}
+                Age: {age}
+                Diagnosis: {diagnosis}
+                Concerns: {concerns}
+                """,
+
+                "patient_info": None,
+                "patient_id": st.session_state.selected_patient_id,
+
+                "retrieved_docs": None,
+
+                "therapy_plan": None,
+                "plan_id": None,
+
+                "qa_result": None,
+
+                "approval_status": None,
+
+                "clinical_report": None,
+                "parent_report": None,
+
+                "clinical_report_id": None,
+                "parent_report_id": None,
+
+                "next_agent": ""
+            }
+
+            result = graph.invoke(
+                initial_state,
+                config=config
             )
 
-            col1, col2 = st.columns(2)
+            st.session_state.plan_generated = True
 
-            # ------------------------------
-            # APPROVE
-            # ------------------------------
+            print("Selected_patient_id in app : \n",  st.session_state.selected_patient_id)
 
-            with col1:
+            # Select Plan Dropdown updates automatically without needing to reload the patient.
+            if st.session_state.selected_patient_id:
 
-                if st.button("✅ Approve Plan", use_container_width=True):
-                    with st.spinner("Preparing clinical and parent reports..."):
+                st.session_state.patient_plans = (
+                    get_patient_plans(
+                        st.session_state.selected_patient_id
+                    )
+                )
+
+
+            if (st.session_state.screen_mode == "workspace"
+                and st.session_state.plan_generated):
+
+                st.success("✅ Therapy plan generated successfully.")
+
+            
+            # st.write("RESULT")
+            # st.write(result)
+            
+            # Check interrupt
+            graph_state = graph.get_state(config)
+
+            state_values = graph_state.values
+
+            new_patient_id = graph_state.values.get("patient_id")
+
+            if new_patient_id:
+                st.session_state.selected_patient_id = new_patient_id
+
+            print("**************patient_id in graph***************\n", st.session_state.selected_patient_id)
+
+            if state_values:
+
+                # ==================================
+                # THERAPY PLAN
+                # ==================================
+
+                patient_info = state_values.get("patient_info")
+                therapy_plan = state_values.get("therapy_plan")
+                
+                if patient_info:
+
+                    patient = patient_info.copy()
+                    print("who :\n ", patient)
+
+                    if therapy_plan:
+
+                        # ---------------------------------------------------------------------
+                        # Save current patient info and current therapy plan for AI Chat
+                        # ----------------------------------------------------------------------                    
+
+                        therapy_summary = summarize_therapy_plan(
+                            {
+                                "therapy_plan": therapy_plan
+                            }
+                        )
+
+                        st.session_state.therapy_plan_summary = therapy_summary
+                        patient["therapy_plan"] = therapy_summary
+                        
+                    st.session_state.current_patient = patient
+                    print("who and what : \n",  st.session_state.current_patient)
+
+            # st.write("STATE")
+            # st.write(graph_state)
+
+            if graph_state.next:
+                st.session_state.waiting_for_approval = True
+
+            st.rerun()
+
+
+    # ==========================================
+    # DISPLAY STATE
+    # ==========================================
+
+    if (
+        st.session_state.workflow_started
+        and st.session_state.screen_mode == "workspace"
+    ):
+
+        graph_state = graph.get_state(config)
+
+        #st.write(graph_state)
+
+        state = graph_state.values
+
+        if state:
+
+            # ==================================
+            # THERAPY PLAN
+            # ==================================
+
+            therapy_plan = state.get("therapy_plan")
+            patient_info = state.get("patient_info")
+
+
+            if therapy_plan:
+
+                # ---------------------------------------------------------------------
+                # Save current patient info and current therapy plan for AI Chat
+                # ----------------------------------------------------------------------
+
+                st.session_state.loaded_patient = patient_info.copy()
+                st.session_state.therapy_plan = therapy_plan
+
+                st.session_state.therapy_plan_summary = (
+                    summarize_therapy_plan(
+                        {
+                            "therapy_plan": therapy_plan
+                        }
+                    )
+                )
+
+
+                st.divider()
+
+                st.header("📋 Therapy Plan")
+
+                # ------------------------------
+                # Goals
+                # ------------------------------
+
+                st.subheader("🎯 Therapy Goals")
+
+                for goal in therapy_plan["therapy_goals"]:
+
+                    st.write(f"• {goal}")
+
+                # ------------------------------
+                # Weekly Schedule
+                # ------------------------------
+
+                st.subheader("📅 Weekly Therapy Schedule")
+
+                with st.expander(
+                    "View Full 4-Week Therapy Plan",
+                    expanded=False
+                ):
+
+                    for week_plan in therapy_plan["weekly_schedule"]:
+
+                        st.markdown(
+                            f"### 🗓️ {week_plan['week']}"
+                        )
+
+                        st.markdown(
+                            f"**🎯 Focus Area:** "
+                            f"{week_plan['focus_area']}"
+                        )
+
+                        st.markdown("**🛠️ Activities:**")
+
+                        for activity in week_plan["activities"]:
+                            st.markdown(f"- {activity}")
+
+                        st.info(
+                            f"Expected Outcome: "
+                            f"{week_plan['expected_outcome']}"
+                        )
+
+                        st.divider()
+
+                # ------------------------------
+                # Home Program
+                # ------------------------------
+
+                st.subheader("🏠 Home Program Suggestion")
+
+                with st.expander(
+                    "View Home Program Activities",
+                    expanded=False
+                ):
+
+                    for idx, activity in enumerate(
+                        therapy_plan["home_program"],
+                        start=1
+                    ):
+
+                        st.markdown(
+                            f"### 🧩 Activity {idx}: {activity['activity_name']}"
+                        )
+
+                        col1, col2 = st.columns([3, 1])
+
+                        with col1:
+                            st.markdown("**📝 Instructions**")
+                            st.write(activity["instructions"])
+
+                        with col2:
+                            st.markdown("**📅 Recommended Frequency**")
+                            st.success(
+                                activity["recommended_frequency"]
+                            )
+
+                        st.divider()
+
+            # ==================================
+            # QA REVIEW
+            # ==================================
+
+            qa = state.get("qa_result")
+
+            if (st.session_state.screen_mode == "workspace" and qa):
+
+                st.divider()
+
+                st.header("🩺 Clinical Quality Review")
+
+                if qa["status"] == "PASS":
+
+                    st.success("PASS")
+
+                else:
+
+                    st.error("FAIL")
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+
+                    st.metric(
+                        "Concern Coverage",
+                        str(
+                            qa["concern_coverage"]
+                        )
+                    )
+
+                with col2:
+
+                    st.metric(
+                        "Knowledge Base Alignment",
+                        str(
+                            qa["knowledge_alignment"]
+                        )
+                    )
+
+                with col3:
+
+                    st.metric(
+                        "Completeness",
+                        str(
+                            qa["completeness"]
+                        )
+                    )
+
+                st.subheader("🚨 Issues")
+
+                if qa["issues"]:
+
+                    for issue in qa["issues"]:
+
+                        st.write(f"• {issue}")
+
+                else:
+
+                    st.write("No issues found.")
+
+                st.subheader("📝 Recommendations")
+
+                if qa["suggestions"]:
+
+                    for suggestion in qa["suggestions"]:
+
+                        st.write(f"• {suggestion}")
+
+                else:
+
+                    st.write("No suggestions.")
+
+            # ==================================
+            # HUMAN REVIEW
+            # ==================================
+
+            if (
+                st.session_state.screen_mode == "workspace"
+                and st.session_state.waiting_for_approval
+            ):
+
+                st.divider()
+
+                st.header("👨‍⚕️ Clinical Approval")
+
+                st.info(
+                    "Please review the therapy plan and clinical review findings "
+                    "before approving the treatment plan."
+                )
+
+                col1, col2 = st.columns(2)
+
+                # ------------------------------
+                # APPROVE
+                # ------------------------------
+
+                with col1:
+
+                    if st.button("✅ Approve Plan", use_container_width=True):
+                        with st.spinner("Preparing clinical and parent reports..."):
+
+                            graph.invoke(
+                                Command(
+                                    resume="approved"
+                                ),
+                                config=config
+                            )
+
+                            st.session_state.waiting_for_approval = False
+                            
+                            st.session_state.reports_generated = True
+                            
+                            if st.session_state.get("reports_generated", False):
+                                st.success(
+                                    "✅ Clinical and parent reports generated successfully."
+                                )
+                            
+                            st.rerun()
+
+                # ------------------------------
+                # REJECT
+                # ------------------------------
+
+                with col2:
+
+                    if st.button(
+                        "❌ Reject Plan",
+                        use_container_width=True
+                    ):
 
                         graph.invoke(
                             Command(
-                                resume="approved"
+                                resume="rejected"
                             ),
                             config=config
                         )
 
                         st.session_state.waiting_for_approval = False
-                        
-                        st.session_state.reports_generated = True
-                        
-                        if st.session_state.get("reports_generated", False):
-                            st.success(
-                                "✅ Clinical and parent reports generated successfully."
-                            )
-                        
+
                         st.rerun()
 
-            # ------------------------------
-            # REJECT
-            # ------------------------------
+            # ==================================
+            # APPROVAL STATUS
+            # ==================================
 
-            with col2:
+            approval_status = state.get(
+                "approval_status"
+            )
 
-                if st.button(
-                    "❌ Reject Plan",
-                    use_container_width=True
+            if approval_status == "approved":
+
+                st.success(
+                    "Therapy Plan Approved"
+                )
+
+            elif approval_status == "rejected":
+
+                st.error(
+                    "Therapy Plan Rejected"
+                )
+
+            # ==================================
+            # REPORTS
+            # ==================================
+
+            clinical_report = state.get(
+                "clinical_report"
+            )
+
+            parent_report = state.get(
+                "parent_report"
+            )
+
+            if clinical_report:
+
+                st.divider()
+
+                st.header(
+                    "Clinical Report"
+                )
+
+                #st.markdown(clinical_report)
+                with st.expander(
+                    "View Clinical Report",
+                    expanded=True
                 ):
+                    st.markdown(clinical_report)
 
-                    graph.invoke(
-                        Command(
-                            resume="rejected"
-                        ),
-                        config=config
+            if parent_report:
+
+                st.header(
+                    "Parent Report"
+                )
+
+                #st.markdown(parent_report)
+
+                with st.expander(
+                    "View Parent Report",
+                    expanded=True
+                ):
+                    st.markdown(parent_report)
+
+
+            if clinical_report and parent_report:
+                clinical_pdf = generate_pdf(
+                    "Clinical Report",
+                    clinical_report
+                )
+
+                parent_pdf = generate_pdf(
+                    "Parent Report",
+                    parent_report
+                )
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.download_button(
+                        label="🏠 Download Parent Report PDF",
+                        data=parent_pdf,
+                        file_name="Parent_Report.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
                     )
 
-                    st.session_state.waiting_for_approval = False
+                with col2:
+                    st.download_button(
+                        label="📋 Download Clinical Report PDF",
+                        data=clinical_pdf,
+                        file_name="Clinical_Report.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
 
-                    st.rerun()
-
-        # ==================================
-        # APPROVAL STATUS
-        # ==================================
-
-        approval_status = state.get(
-            "approval_status"
-        )
-
-        if approval_status == "approved":
-
-            st.success(
-                "Therapy Plan Approved"
-            )
-
-        elif approval_status == "rejected":
-
-            st.error(
-                "Therapy Plan Rejected"
-            )
-
-        # ==================================
-        # REPORTS
-        # ==================================
-
-        clinical_report = state.get(
-            "clinical_report"
-        )
-
-        parent_report = state.get(
-            "parent_report"
-        )
-
-        if clinical_report:
-
-            st.divider()
-
-            st.header(
-                "Clinical Report"
-            )
-
-            #st.markdown(clinical_report)
-            with st.expander(
-                "View Clinical Report",
-                expanded=True
-            ):
-                st.markdown(clinical_report)
-
-        if parent_report:
-
-            st.header(
-                "Parent Report"
-            )
-
-            #st.markdown(parent_report)
-
-            with st.expander(
-                "View Parent Report",
-                expanded=True
-            ):
-                st.markdown(parent_report)
+                # ==========================================
+                # CLEAR ALL STATES
+                # ==========================================
+                with col3:
+                    if st.button("🆕 Start New Patient", use_container_width=True):
+                        reset_application()
+                        # st.session_state.clear()
+                        # st.session_state.plan_generated = False
+                        # st.session_state.reports_generated = False
+                        # st.session_state.thread_id = str(uuid.uuid4())
+                        st.rerun()
 
 
-        if clinical_report and parent_report:
-            clinical_pdf = generate_pdf(
-                "Clinical Report",
-                clinical_report
-            )
+# ==================================
+# Chat UI
+# ==================================
+with right_col:
 
-            parent_pdf = generate_pdf(
-                "Parent Report",
-                parent_report
-            )
-
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                st.download_button(
-                    label="🏠 Download Parent Report PDF",
-                    data=parent_pdf,
-                    file_name="Parent_Report.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-
-            with col2:
-                st.download_button(
-                    label="📋 Download Clinical Report PDF",
-                    data=clinical_pdf,
-                    file_name="Clinical_Report.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-
-            # ==========================================
-            # CLEAR ALL STATES
-            # ==========================================
-            with col3:
-                if st.button("🆕 Start New Patient", use_container_width=True):
-                    reset_application()
-                    # st.session_state.clear()
-                    # st.session_state.plan_generated = False
-                    # st.session_state.reports_generated = False
-                    # st.session_state.thread_id = str(uuid.uuid4())
-                    st.rerun()
-
-
+    render_chat()

@@ -23,6 +23,10 @@ def get_connection():
     return conn
 
 
+# ==========================================
+# ONE TIME DB TABLES SETUP
+# ==========================================
+
 def initialize_database():
 
     conn = get_connection()
