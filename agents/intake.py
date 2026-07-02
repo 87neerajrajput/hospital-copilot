@@ -1,71 +1,180 @@
-import os
-from typing import List
-from pydantic import BaseModel, Field
-from langchain_groq import ChatGroq
+
+import asyncio
+
 from dotenv import load_dotenv
 from graph.state import HealthcareState
-from langchain_core.messages import SystemMessage, HumanMessage
+#from tools.db_tools import save_patient
 
-from tools.db_tools import save_patient, update_patient
+from hospital_mcp.hospital_client import HospitalMCPClient
 
 load_dotenv()
 
-# 1. Define the structural schema using Pydantic
-class PatientProfile(BaseModel):
-    name: str = Field(description="First or full name of the child")
-    age: int = Field(description="Current age of the child in years")
-    diagnosis: str = Field(description="Primary clinical or developmental diagnosis")
-    concerns: List[str] = Field(description="Specific areas of concern or struggle")
+# ==========================================================
+# MCP CLIENT
+# ==========================================================
 
-# 2. Initialize the Groq model
-# Low temperature (0) keeps the extraction strict and deterministic
-llm = ChatGroq(
-    #model="llama-3.3-70b-versatile", 
-    model="llama-3.1-8b-instant",
-    temperature=0
-)
+mcp = HospitalMCPClient()
 
-# 3. Create the structured wrapper
-# This forces the LLM to output data fitting the Pydantic schema perfectly
-structured_llm = llm.with_structured_output(PatientProfile)
 
+
+# ============================================================
+# Merge therapist-entered information with AI assessment
+# ============================================================
+
+def merge_patient_information(
+    manual: dict,
+    assessment: dict | None,
+) -> dict:
+    """
+    Merge therapist-entered information with
+    AI extracted assessment information.
+
+    Therapist-entered values always take priority.
+    """
+
+    if assessment is None:
+        return manual
+
+    merged = {}
+
+    # --------------------------------------------------
+    # Name
+    # --------------------------------------------------
+
+    merged["name"] = (
+        manual.get("name")
+        or assessment.get("name")
+    )
+
+    # --------------------------------------------------
+    # Age
+    # --------------------------------------------------
+
+    merged["age"] = (
+        manual.get("age")
+        or assessment.get("age")
+    )
+
+    # --------------------------------------------------
+    # Diagnosis
+    # --------------------------------------------------
+
+    merged["diagnosis"] = (
+        manual.get("diagnosis")
+        or assessment.get("diagnosis")
+    )
+
+    # --------------------------------------------------
+    # Concerns
+    # --------------------------------------------------
+
+    merged_concerns = []
+
+    for concern in (
+        manual.get("concerns", [])
+        + assessment.get("concerns", [])
+    ):
+
+        concern = concern.strip()
+
+        if (
+            concern
+            and concern not in merged_concerns
+        ):
+
+            merged_concerns.append(concern)
+
+    merged["concerns"] = merged_concerns
+
+    return merged
+
+
+# ============================================================
+# Intake Agent
+# ============================================================
 
 def intake_agent(state: HealthcareState):
 
-    print("\n=== Intake Agent ===")
+    print("\n========== Intake Agent ==========")
 
-    profile = structured_llm.invoke([
-        SystemMessage(content="""
-        You are a clinical intake assistant.
+    print("Manual Form:")
 
-            Extract:
-            - name
-            - age
-            - diagnosis
-            - concerns
+    print(state["patient_form"])
 
-        """),
-        HumanMessage(content=state['user_query'])
-    ])
+    print("\nAssessment Summary:")
 
-    patient_info = profile.model_dump()
+    print(state.get("assessment_summary"))
 
-    print("\nExtracted Patient Info:")
+    print("=================================\n")
+
+    # --------------------------------------------------
+    # Manual therapist-entered information
+    # --------------------------------------------------
+
+    patient_info = state["patient_form"].copy()
+
+    # --------------------------------------------------
+    # Merge Assessment Summary
+    # --------------------------------------------------
+
+    patient_info = merge_patient_information(
+
+        manual=patient_info,
+
+        assessment=state.get(
+            "assessment_summary"
+        ),
+    )
+
+    print("\nMerged Patient Information:")
+
     print(patient_info)
 
-    #patient_id = save_patient(patient_info)
+    # --------------------------------------------------
+    # Save / Update Patient
+    # --------------------------------------------------
 
     if state.get("patient_id"):
-        
+
         patient_id = state["patient_id"]
-        update_patient(patient_id, patient_info)
+
+        result = asyncio.run(
+            mcp.update_patient(
+                patient_id,
+                patient_info,
+            )
+        )
+
+        if result["success"]:
+            print("Patient updated: ", result["message"])
+        else:
+            print(result["message"])
 
     else:
-        patient_id = save_patient(patient_info)
+
+        result = asyncio.run(
+            mcp.save_patient(
+                patient_info
+            )
+        )
+        
+        if result["success"]:
+
+            print("Patient saved: ", result["message"])
+            patient_id = result["patient_id"]
+
+        else:
+            print(result["message"])
+
+        
+
+    # --------------------------------------------------
+    # Return Workflow State
+    # --------------------------------------------------
 
     return {
+
         "patient_info": patient_info,
-        "patient_id": patient_id
+
+        "patient_id": patient_id,
     }
-
-

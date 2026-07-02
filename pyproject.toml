@@ -17,5 +17,7 @@ dependencies = [
     "reportlab",
     "langchain-google-genai",
     "google-generativeai",
-    "langchain-chroma"
+    "langchain-chroma",
+    "pymupdf",
+    "mcp[cli]"
 ]

@@ -1,10 +1,20 @@
+import asyncio
+
 from pydantic import BaseModel, Field
 
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from graph.state import HealthcareState
-from tools.db_tools import save_report
+#from tools.db_tools import save_report
+
+from hospital_mcp.hospital_client import HospitalMCPClient
+
+# ==========================================================
+# MCP CLIENT
+# ==========================================================
+
+mcp = HospitalMCPClient()
 
 
 class Reports(BaseModel):
@@ -207,6 +217,9 @@ def report_agent(state: HealthcareState):
 
     1. Clinical Report
     2. Parent Report
+
+    Each Report should not be more than 700 words.
+
     """
 
     reports = structured_llm.invoke([
@@ -231,28 +244,54 @@ def report_agent(state: HealthcareState):
         HumanMessage(content=prompt)
     ])
 
-    result = reports.model_dump()
+    response = reports.model_dump()
 
     print("\nClinical Report Generated")
     print("\nParent Report Generated")
 
     patient_id = state["patient_id"]
 
-    clinical_report_id = save_report(
-        patient_id=patient_id,
-        report_type="clinical",
-        report_content=result["clinical_report"]
+    clinical_result = asyncio.run(
+        mcp.save_report(
+            patient_id=patient_id,
+            report_type="clinical",
+            report_content=response["clinical_report"]
+        )
     )
 
-    parent_report_id = save_report(
-        patient_id=patient_id,
-        report_type="parent",
-        report_content=result["parent_report"]
+    if clinical_result["success"]:
+
+        clinical_report_id = clinical_result["report_id"]
+
+        print(clinical_result["message"])
+
+    else:
+
+        print(clinical_result["message"])
+
+
+
+    parent_result = asyncio.run(
+        mcp.save_report(
+            patient_id=patient_id,
+            report_type="parent",
+            report_content=response["parent_report"]
+        )
     )
+
+    if parent_result["success"]:
+
+        parent_report_id = parent_result["report_id"]
+
+        print(parent_result["message"])
+
+    else:
+
+        print(parent_result["message"])
 
     return {
-        "clinical_report": result["clinical_report"],
-        "parent_report": result["parent_report"],
+        "clinical_report": response["clinical_report"],
+        "parent_report": response["parent_report"],
         "clinical_report_id": clinical_report_id,
         "parent_report_id": parent_report_id
     }

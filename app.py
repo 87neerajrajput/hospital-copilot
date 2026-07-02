@@ -1,4 +1,7 @@
+import asyncio
 import uuid
+
+import mcp
 
 import streamlit as st
 
@@ -8,9 +11,19 @@ from graph.workflow import build_graph
 
 from utils.pdf_generator import generate_pdf
 
-from tools.db_tools import initialize_database, search_patients, get_patient, get_patient_plans, get_therapy_plan
+from tools.db_tools import initialize_database
 
 from assistants.therapist_chat import render_chat
+
+from components.assessment_upload import render_assessment_upload
+
+from document_processing.pdf_reader import extract_pdf_text
+
+from document_processing.text_cleaner import clean_pdf_text
+
+from assistants.assessment_extractor import extract_assessment_information
+
+from hospital_mcp.hospital_client import HospitalMCPClient
 
 
 
@@ -32,6 +45,12 @@ st.set_page_config(
 
 
 st.title("🏥 Paravartan Healthcare Copilot")
+
+
+# ==========================================================
+# MCP CLIENT
+# ==========================================================
+mcp = HospitalMCPClient()
 
 
 # ==========================================
@@ -102,6 +121,33 @@ if "therapy_plan_summary" not in st.session_state:
 if "current_patient" not in st.session_state:
     st.session_state.current_patient = None
 
+# ==========================================
+# Assessment PDF
+# ==========================================
+
+if "assessment_pdf" not in st.session_state:
+    st.session_state.assessment_pdf = None
+
+if "assessment_uploader_key" not in st.session_state:
+    st.session_state.assessment_uploader_key = 0
+
+# ==========================================
+# Assessment Text
+# ==========================================
+
+if "assessment_text" not in st.session_state:
+    st.session_state.assessment_text = None
+
+if "assessment_summary" not in st.session_state:
+    st.session_state.assessment_summary = None
+
+if "assessment_applied" not in st.session_state:
+    st.session_state.assessment_applied = False
+
+if "pending_autofill" not in st.session_state:
+    st.session_state.pending_autofill = False
+
+
 
 
 def reset_application():
@@ -116,28 +162,6 @@ def reset_application():
     st.session_state.therapy_plan = None
     st.session_state.therapy_plan_summary = None
 
-    # st.session_state.thread_id = str(uuid.uuid4())
-
-    # st.session_state.selected_patient_id = None
-    # st.session_state.patient_name = ""
-    # st.session_state.age = 0
-    # st.session_state.diagnosis = ""
-    # st.session_state.primary_concerns = ""
-
-    # st.session_state.patient_search = ""
-    # st.session_state.search_results = []
-    # st.session_state.search_message = ""
-
-    # st.session_state.patient_plans = []
-    # st.session_state.selected_plan = None
-    # st.session_state.selected_plan_label = None
-
-    # st.session_state.workflow_started = False
-    # st.session_state.waiting_for_approval = False
-    # st.session_state.plan_generated = False
-    # st.session_state.reports_generated = False
-
-    # st.session_state.screen_mode = "workspace"
 
 
 # -----------------------------------------
@@ -145,7 +169,7 @@ def reset_application():
 # -----------------------------------------
 
 def summarize_therapy_plan(plan):
-    print('plan: \n' ,plan)
+    #print('plan: \n' ,plan)
 
     if not plan:
         return None
@@ -235,7 +259,9 @@ search_text = st.sidebar.text_input(
 if st.sidebar.button("🔍 Search"):
 
     st.session_state.search_results = (
-        search_patients(search_text)
+        asyncio.run(
+            mcp.search_patients(search_text)
+        )
     )
 
     if st.session_state.search_results:
@@ -286,62 +312,69 @@ if st.session_state.search_results:
         options=list(patient_options.keys())
     )
 
-if st.sidebar.button("📂 Load Patient"):
+    if selected_label:
 
-    patient_id = (
-        patient_options[selected_label]
-    )
+        if st.sidebar.button("📂 Load Patient"):
 
-    patient = get_patient(patient_id)
+            patient_id = (
+                patient_options[selected_label]
+            )
 
-    st.session_state.selected_patient_id = (
-        patient_id
-    )
+            #patient = get_patient(patient_id)
+            patient = asyncio.run(
+                mcp.get_patient(patient_id)
+            )
 
-    st.session_state.patient_plans = (
-        get_patient_plans(patient_id)
-    )
+            st.session_state.selected_patient_id = (
+                patient_id
+            )
 
-    st.session_state.loaded_patient = patient
+            st.session_state.patient_plans = (
+                asyncio.run(
+                    mcp.get_patient_plans(patient_id)
+                )
+            )
 
-    # Clear previously viewed plan
-    st.session_state.selected_plan = None
-    st.session_state.selected_plan_label = None
+            st.session_state.loaded_patient = patient
 
-    #clear the search message
-    st.session_state.search_message = None
+            # Clear previously viewed plan
+            st.session_state.selected_plan = None
+            st.session_state.selected_plan_label = None
 
-    st.session_state.patient_name = (
-        patient["name"]
-    )
+            #clear the search message
+            st.session_state.search_message = None
 
-    st.session_state.age = (
-        patient["age"]
-    )
+            st.session_state.patient_name = (
+                patient["name"]
+            )
 
-    st.session_state.diagnosis = (
-        patient["diagnosis"]
-    )
+            st.session_state.age = (
+                patient["age"]
+            )
 
-    st.session_state.primary_concerns = (
-        "\n".join(
-            patient["concerns"]
-        )
-    )
+            st.session_state.diagnosis = (
+                patient["diagnosis"]
+            )
 
-    st.success(
-        "Patient loaded successfully."
-    )
+            st.session_state.primary_concerns = (
+                "\n".join(
+                    patient["concerns"]
+                )
+            )
 
-    # Loading a patient should reset the UI to a clean workspace ready for a new session.
-    st.session_state.screen_mode = "workspace"
-    st.session_state.workflow_started = False
+            st.success(
+                "Patient loaded successfully."
+            )
 
-    # Hide any previously viewed history
-    st.session_state.selected_plan = None
-    st.session_state.current_patient = patient
+            # Loading a patient should reset the UI to a clean workspace ready for a new session.
+            st.session_state.screen_mode = "workspace"
+            st.session_state.workflow_started = False
 
-    st.rerun()
+            # Hide any previously viewed history
+            st.session_state.selected_plan = None
+            st.session_state.current_patient = patient
+
+            st.rerun()
 
 # ==========================================
 # PATIENT HISTORY
@@ -388,7 +421,9 @@ if st.session_state.selected_patient_id:
             #     get_therapy_plan(plan_id)
             # )
 
-            plan = get_therapy_plan(plan_id)
+            plan =  asyncio.run(
+                        mcp.get_therapy_plan(plan_id)
+                    )
 
             st.session_state.selected_plan = plan["therapy_plan"]
 
@@ -494,6 +529,47 @@ left_col, right_col = st.columns(
 
 with left_col:
 
+    #st.session_state.assessment_applied = True
+
+    # =====================================================
+    # Auto-fill empty fields BEFORE widgets are created
+    # =====================================================
+
+    if (
+        st.session_state.pending_autofill
+        and st.session_state.assessment_summary
+    ):
+
+        summary = st.session_state.assessment_summary
+
+        if (
+            not st.session_state.get("patient_name", "").strip()
+            and summary.name
+        ):
+            st.session_state.patient_name = summary.name
+
+        if (
+            st.session_state.get("age", 0) == 0
+            and summary.age
+        ):
+            st.session_state.age = summary.age
+
+        if (
+            not st.session_state.get("diagnosis", "").strip()
+            and summary.diagnosis
+        ):
+            st.session_state.diagnosis = summary.diagnosis
+
+        if (
+            not st.session_state.get("primary_concerns", "").strip()
+            and summary.concerns
+        ):
+            st.session_state.primary_concerns = "\n".join(
+                summary.concerns
+            )
+
+        st.session_state.pending_autofill = False
+
     # ==========================================
     # PATIENT INTAKE
     # ==========================================
@@ -521,6 +597,85 @@ with left_col:
         "Primary Concerns",
         key="primary_concerns"
     )
+
+    st.divider()
+
+    render_assessment_upload()
+
+###########################
+
+
+    if st.session_state.assessment_pdf is not None:
+
+        if st.session_state.assessment_summary is None:
+
+            raw_text = extract_pdf_text(
+                st.session_state.assessment_pdf
+            )
+
+            st.session_state.assessment_text = clean_pdf_text(
+                raw_text
+            )
+
+            
+            if st.session_state.assessment_text:
+
+                with st.spinner("Understanding assessment report..."):
+
+                    summary = extract_assessment_information(
+                        st.session_state.assessment_text
+                    )
+
+                    st.session_state.assessment_summary = summary
+                    #st.session_state.assessment_applied = False
+                    # Trigger autofill on next rerun
+                    st.session_state.pending_autofill = True
+                    #st.rerun()
+
+                    # ==========================================
+                    # APPLY EXTRACTED ASSESSMENT
+                    # ==========================================
+
+                    summary = st.session_state.assessment_summary
+
+
+                    if (
+                        summary is not None
+                        and not st.session_state.assessment_applied
+                    ):
+
+                        st.success(
+                            "✅ Assessment extracted successfully."
+                        )
+
+            else:
+
+                st.session_state.assessment_summary = None
+            
+
+            with st.expander(
+                "🧠 Extracted Assessment Summary"
+            ):
+
+                st.write(
+                    st.session_state.assessment_summary
+                )
+
+            with st.expander("📄 Extracted PDF Text"):
+
+                st.text(
+                    st.session_state.assessment_text
+                    if st.session_state.assessment_text
+                    else "No PDF uploaded."
+                )
+                st.rerun()
+
+    else:
+
+        st.session_state.assessment_text = None
+
+    
+    st.divider()
 
 
     # ==========================================
@@ -656,19 +811,58 @@ with left_col:
 
             initial_state = {
 
-                "user_query": f"""
-                Patient Name: {patient_name}
-                Age: {age}
-                Diagnosis: {diagnosis}
-                Concerns: {concerns}
-                """,
+                # --------------------------------------------------
+                # Structured patient information from the form
+                # --------------------------------------------------
+
+                "patient_form": {
+
+                    "name": patient_name.strip(),
+
+                    "age": age,
+
+                    "diagnosis": diagnosis.strip(),
+
+                    "concerns": [
+
+                        c.strip()
+
+                        for c in concerns.split("\n")
+
+                        if c.strip()
+
+                    ],
+                },
+
+                # --------------------------------------------------
+                # Kept for backward compatibility.
+                # Intake Agent will no longer use this.
+                # --------------------------------------------------
+
+                "user_query": "",
+
+                # --------------------------------------------------
+                # AI Extracted Assessment Summary
+                # --------------------------------------------------
+
+                "assessment_summary": (
+                    st.session_state.assessment_summary.model_dump()
+                    if st.session_state.assessment_summary
+                    else None
+                ),
+
+                # --------------------------------------------------
+                # Workflow State
+                # --------------------------------------------------
 
                 "patient_info": None,
+
                 "patient_id": st.session_state.selected_patient_id,
 
                 "retrieved_docs": None,
 
                 "therapy_plan": None,
+
                 "plan_id": None,
 
                 "qa_result": None,
@@ -676,13 +870,19 @@ with left_col:
                 "approval_status": None,
 
                 "clinical_report": None,
+
                 "parent_report": None,
 
                 "clinical_report_id": None,
+
                 "parent_report_id": None,
 
                 "next_agent": ""
             }
+
+            print("\n========== INITIAL STATE ==========")
+            print(initial_state["assessment_summary"])
+            print("===================================\n")
 
             result = graph.invoke(
                 initial_state,
@@ -697,10 +897,12 @@ with left_col:
             if st.session_state.selected_patient_id:
 
                 st.session_state.patient_plans = (
-                    get_patient_plans(
-                        st.session_state.selected_patient_id
+                        asyncio.run(
+                        mcp.get_patient_plans(st.session_state.selected_patient_id)
                     )
                 )
+
+
 
 
             if (st.session_state.screen_mode == "workspace"
@@ -732,6 +934,7 @@ with left_col:
 
                 patient_info = state_values.get("patient_info")
                 therapy_plan = state_values.get("therapy_plan")
+                assessment_summary = state_values.get("assessment_summary")
                 
                 if patient_info:
 
@@ -752,6 +955,7 @@ with left_col:
 
                         st.session_state.therapy_plan_summary = therapy_summary
                         patient["therapy_plan"] = therapy_summary
+                        patient["assessment_summary"] = assessment_summary
                         
                     st.session_state.current_patient = patient
                     print("who and what : \n",  st.session_state.current_patient)

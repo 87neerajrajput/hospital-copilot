@@ -1,5 +1,7 @@
 import streamlit as st
 
+import asyncio
+
 from assistants.chat_assistant import ask_ai
 
 CHAT_HEIGHT = 650
@@ -87,22 +89,8 @@ def render_chat():
 
             patient = None
 
-            print("Selected_patient_id in chat: \n",  st.session_state.selected_patient_id)
-
             if st.session_state.selected_patient_id:
 
-                # patient = {
-
-                #     "name": st.session_state.patient_name,
-
-                #     "age": st.session_state.age,
-
-                #     "diagnosis": st.session_state.diagnosis,
-
-                #     "concerns": (st.session_state.primary_concerns.split("\n")),
-
-                #     "therapy_plan": (st.session_state.therapy_plan_summary)
-                # }
                 patient = st.session_state.current_patient
 
             # -----------------------------------
@@ -115,11 +103,12 @@ def render_chat():
 
             with st.spinner("Thinking..."):
 
-                answer = ask_ai(
-                    question=prompt,
-                    patient=patient,
-                    chat_history=history[-MAX_HISTORY:],  
-                )
+                answer = asyncio.run(
+                    ask_ai(
+                        question=prompt,
+                        patient=patient,
+                        chat_history=history[-MAX_HISTORY:],  
+                ))
 
             st.session_state.chat_history.append(
                 {

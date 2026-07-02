@@ -2,7 +2,11 @@ from typing_extensions import TypedDict
 
 class HealthcareState(TypedDict):
 
+    patient_form: dict | None
+
     user_query: str
+
+    assessment_summary: dict | None
 
     patient_info: dict | None
 

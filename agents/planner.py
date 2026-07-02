@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import List
 from pydantic import BaseModel, Field
@@ -6,9 +7,17 @@ from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from graph.state import HealthcareState
-from tools.db_tools import save_therapy_plan
+#from tools.db_tools import save_therapy_plan
+
+from hospital_mcp.hospital_client import HospitalMCPClient
 
 load_dotenv()
+
+# ==========================================================
+# MCP CLIENT
+# ==========================================================
+
+mcp = HospitalMCPClient()
 
 # 1. Define the structural schema using Pydantic
 class WeeklyPlan(BaseModel):
@@ -48,13 +57,76 @@ def planning_agent(state: HealthcareState):
     patient_info = state['patient_info']
     retrieved_docs = state["retrieved_docs"]
     knowledge_context = "\n\n".join(retrieved_docs)
+    assessment_summary = state.get("assessment_summary")
+
+    # -----------------------------------------
+    # Assessment Context
+    # -----------------------------------------
+
+    assessment_context = ""
+
+    if assessment_summary:
+
+        assessment_context = f"""
+        Assessment Findings
+        ===================
+
+        Diagnosis Confidence:
+        {assessment_summary.get("diagnosis_confidence","Not Available")}
+
+        Diagnosis Reason:
+        {assessment_summary.get("diagnosis_reason","Not Available")}
+
+        Clinical Findings:
+        {assessment_summary.get("clinical_findings","Not Available")}
+
+        Developmental Findings:
+        {assessment_summary.get("developmental_findings","Not Available")}
+
+        Sensory Findings:
+        {assessment_summary.get("sensory_findings","Not Available")}
+
+        Communication Findings:
+        {assessment_summary.get("communication_findings","Not Available")}
+
+        Behaviour Findings:
+        {assessment_summary.get("behavior_findings","Not Available")}
+
+        ADL Findings:
+        {assessment_summary.get("adl_findings","Not Available")}
+        """
 
     PROMPT = f"""
-    You are a senior pediatric occupational therapist.
+    You are a senior pediatric occupational therapist with expertise in:
+
+    • Autism Spectrum Disorder
+    • ADHD
+    • Developmental Delay
+    • Sensory Integration
+    • Pediatric Neurology
+    • Early Intervention
+
+    Always integrate:
+
+    1. Patient demographics
+
+    2. Assessment findings
+
+    3. Clinical observations
+
+    4. Retrieved clinical knowledge
+
+    Your therapy plans should be individualized rather than diagnosis-based.
+
+    Every recommendation must be clinically justified by the available assessment findings whenever possible.
 
     PATIENT INFORMATION
     ===================
     {patient_info}
+
+    ASSESSMENT FINDINGS
+    ===================
+    {assessment_context}
 
     KNOWLEDGE BASE CONTEXT
     ======================
@@ -64,16 +136,32 @@ def planning_agent(state: HealthcareState):
 
     Requirements:
 
-    1. Address ALL identified concerns.
-    2. Use recommendations supported by the knowledge base.
-    3. Create specific and measurable therapy goals.
-    4. Ensure goals are age-appropriate and functional.
-    5. Create a 4-week therapy schedule.
-    6. Ensure weekly activities directly support therapy goals.
-    7. Create practical home program activities that caregivers can easily implement.
-    8. Ensure home program activities reinforce therapy goals.
-    9. Maintain consistency between goals, weekly schedule, and home program.
+    1. Use BOTH the patient information and assessment findings.
 
+    2. Prioritize functional limitations identified in the assessment.
+
+    3. If sensory processing findings exist,
+    integrate sensory-based interventions.
+
+    4. If communication deficits exist,
+    include communication-supportive activities.
+
+    5. If ADL limitations exist,
+    include functional independence goals.
+
+    6. If behavioural observations exist,
+    include regulation and behaviour management strategies.
+
+    7. Address ALL identified concerns.
+
+    8. Use recommendations supported by the retrieved clinical knowledge.
+
+    9. Create specific, measurable, age-appropriate SMART goals.
+
+    10. Ensure weekly activities progressively build toward long-term goals.
+
+    11. Ensure every home program activity directly reinforces the weekly intervention.
+    
     Generate:
 
     -----------------------------------------
@@ -140,14 +228,24 @@ def planning_agent(state: HealthcareState):
 
     therapy_plan = profile.model_dump()
 
-    print("\nGenerated Therapy Plan:")
-    print(therapy_plan)
-
-    plan_id = save_therapy_plan(
-        state["patient_id"],
-        patient_info,
-        therapy_plan
+    result = asyncio.run(
+        mcp.save_therapy_plan(
+            state["patient_id"],
+            patient_info,
+            therapy_plan,
+        )
     )
+
+    if result["success"]:
+
+        plan_id = result["plan_id"]
+
+        print(result["message"])
+
+    else:
+
+        print(result["message"])
+
 
     return {
         "therapy_plan": therapy_plan,

@@ -19,7 +19,7 @@ def get_connection():
             user=os.getenv("DB_USER"),
             password=os.getenv("DB_PASSWORD")
         )
-    print('database_conn : ', conn)
+    #print('database_conn : ', conn)
     return conn
 
 
@@ -95,286 +95,286 @@ def initialize_database():
     print("Database initialized successfully.")
     
 
-def save_patient(patient_info):
+# def save_patient(patient_info):
 
-    conn = get_connection()
-    cursor = conn.cursor()
+#     conn = get_connection()
+#     cursor = conn.cursor()
 
-    query = """
-    INSERT INTO patients (
-        name,
-        age,
-        diagnosis,
-        concerns
-    )
-    VALUES (%s, %s, %s, %s)
-    RETURNING id;
-    """
+#     query = """
+#     INSERT INTO patients (
+#         name,
+#         age,
+#         diagnosis,
+#         concerns
+#     )
+#     VALUES (%s, %s, %s, %s)
+#     RETURNING id;
+#     """
 
-    cursor.execute(
-        query,
-        (
-            patient_info["name"],
-            patient_info["age"],
-            patient_info["diagnosis"],
-            ", ".join(patient_info["concerns"])
-        )
-    )
+#     cursor.execute(
+#         query,
+#         (
+#             patient_info["name"],
+#             patient_info["age"],
+#             patient_info["diagnosis"],
+#             ", ".join(patient_info["concerns"])
+#         )
+#     )
 
-    patient_id = cursor.fetchone()[0]
+#     patient_id = cursor.fetchone()[0]
 
-    conn.commit()
+#     conn.commit()
 
-    cursor.close()
-    conn.close()
+#     cursor.close()
+#     conn.close()
 
-    return patient_id
-
-
-def get_patient(patient_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    query = """
-    SELECT
-        id,
-        name,
-        age,
-        diagnosis,
-        concerns
-    FROM patients
-    WHERE id = %s;
-    """
-
-    cursor.execute(
-        query,
-        (patient_id,)
-    )
-
-    row = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    if not row:
-        return None
-
-    return {
-        "id": row[0],
-        "name": row[1],
-        "age": row[2],
-        "diagnosis": row[3],
-        "concerns": row[4].split(", ") if row[4] else []
-    }
+#     return patient_id
 
 
-def search_patients(search_text):
+# def get_patient(patient_id):
 
-    conn = get_connection()
-    cursor = conn.cursor()
+#     conn = get_connection()
+#     cursor = conn.cursor()
 
-    query = """
-    SELECT
-        id,
-        name,
-        age,
-        diagnosis
-    FROM patients
-    WHERE LOWER(name)
-    LIKE LOWER(%s)
-    ORDER BY name;
-    """
+#     query = """
+#     SELECT
+#         id,
+#         name,
+#         age,
+#         diagnosis,
+#         concerns
+#     FROM patients
+#     WHERE id = %s;
+#     """
 
-    cursor.execute(
-        query,
-        (
-            f"%{search_text}%",
-        )
-    )
+#     cursor.execute(
+#         query,
+#         (patient_id,)
+#     )
 
-    rows = cursor.fetchall()
+#     row = cursor.fetchone()
 
-    cursor.close()
-    conn.close()
+#     cursor.close()
+#     conn.close()
 
-    return [
-        {
-            "id": row[0],
-            "name": row[1],
-            "age": row[2],
-            "diagnosis": row[3]
-        }
-        for row in rows
-    ]
+#     if not row:
+#         return None
 
-def save_therapy_plan(patient_id, patient_info, therapy_plan):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    query = """
-    INSERT INTO therapy_plans (
-        patient_id,
-        plan
-    )
-    VALUES (%s, %s)
-    RETURNING id;
-    """
-
-    cursor.execute(
-        query,
-        (
-            patient_id,
-            json.dumps(
-                {
-                    "patient_info": patient_info,
-                    "therapy_plan": therapy_plan
-                }
-)
-        )
-    )
-
-    plan_id = cursor.fetchone()[0]
-
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-
-    return plan_id
+#     return {
+#         "id": row[0],
+#         "name": row[1],
+#         "age": row[2],
+#         "diagnosis": row[3],
+#         "concerns": row[4].split(", ") if row[4] else []
+#     }
 
 
-def save_report(
-    patient_id: int,
-    report_type: str,
-    report_content: str
-):
+# def search_patients(search_text):
 
-    conn = get_connection()
-    cursor = conn.cursor()
+#     conn = get_connection()
+#     cursor = conn.cursor()
 
-    query = """
-    INSERT INTO reports (
-        patient_id,
-        report_type,
-        report_content
-    )
-    VALUES (%s, %s, %s)
-    RETURNING id;
-    """
+#     query = """
+#     SELECT
+#         id,
+#         name,
+#         age,
+#         diagnosis
+#     FROM patients
+#     WHERE LOWER(name)
+#     LIKE LOWER(%s)
+#     ORDER BY id DESC;
+#     """
 
-    cursor.execute(
-        query,
-        (
-            patient_id,
-            report_type,
-            report_content
-        )
-    )
+#     cursor.execute(
+#         query,
+#         (
+#             f"%{search_text}%",
+#         )
+#     )
 
-    report_id = cursor.fetchone()[0]
+#     rows = cursor.fetchall()
 
-    conn.commit()
+#     cursor.close()
+#     conn.close()
 
-    cursor.close()
-    conn.close()
+#     return [
+#         {
+#             "id": row[0],
+#             "name": row[1],
+#             "age": row[2],
+#             "diagnosis": row[3]
+#         }
+#         for row in rows
+#     ]
 
-    return report_id
+# def save_therapy_plan(patient_id, patient_info, therapy_plan):
+
+#     conn = get_connection()
+#     cursor = conn.cursor()
+
+#     query = """
+#     INSERT INTO therapy_plans (
+#         patient_id,
+#         plan
+#     )
+#     VALUES (%s, %s)
+#     RETURNING id;
+#     """
+
+#     cursor.execute(
+#         query,
+#         (
+#             patient_id,
+#             json.dumps(
+#                 {
+#                     "patient_info": patient_info,
+#                     "therapy_plan": therapy_plan
+#                 }
+# )
+#         )
+#     )
+
+#     plan_id = cursor.fetchone()[0]
+
+#     conn.commit()
+
+#     cursor.close()
+#     conn.close()
+
+#     return plan_id
 
 
-def get_patient_plans(patient_id):
+# def save_report(
+#     patient_id: int,
+#     report_type: str,
+#     report_content: str
+# ):
 
-    conn = get_connection()
-    cursor = conn.cursor()
+#     conn = get_connection()
+#     cursor = conn.cursor()
 
-    query = """
-    SELECT
-        id,
-        created_at
-    FROM therapy_plans
-    WHERE patient_id = %s
-    ORDER BY created_at DESC;
-    """
+#     query = """
+#     INSERT INTO reports (
+#         patient_id,
+#         report_type,
+#         report_content
+#     )
+#     VALUES (%s, %s, %s)
+#     RETURNING id;
+#     """
 
-    cursor.execute(
-        query,
-        (patient_id,)
-    )
+#     cursor.execute(
+#         query,
+#         (
+#             patient_id,
+#             report_type,
+#             report_content
+#         )
+#     )
 
-    rows = cursor.fetchall()
+#     report_id = cursor.fetchone()[0]
 
-    cursor.close()
-    conn.close()
+#     conn.commit()
 
-    return [
-        {
-            "id": row[0],
-            "created_at": row[1]
-        }
-        for row in rows
-    ]
+#     cursor.close()
+#     conn.close()
+
+#     return report_id
 
 
-def get_therapy_plan(plan_id):
+# def get_patient_plans(patient_id):
 
-    conn = get_connection()
-    cursor = conn.cursor()
+#     conn = get_connection()
+#     cursor = conn.cursor()
 
-    query = """
-    SELECT plan
-    FROM therapy_plans
-    WHERE id = %s;
-    """
+#     query = """
+#     SELECT
+#         id,
+#         created_at
+#     FROM therapy_plans
+#     WHERE patient_id = %s
+#     ORDER BY created_at DESC;
+#     """
 
-    cursor.execute(
-        query,
-        (plan_id,)
-    )
+#     cursor.execute(
+#         query,
+#         (patient_id,)
+#     )
 
-    row = cursor.fetchone()
+#     rows = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
+#     cursor.close()
+#     conn.close()
 
-    if not row:
-        return None
+#     return [
+#         {
+#             "id": row[0],
+#             "created_at": row[1]
+#         }
+#         for row in rows
+#     ]
 
-    return row[0]
+
+# def get_therapy_plan(plan_id):
+
+#     conn = get_connection()
+#     cursor = conn.cursor()
+
+#     query = """
+#     SELECT plan
+#     FROM therapy_plans
+#     WHERE id = %s;
+#     """
+
+#     cursor.execute(
+#         query,
+#         (plan_id,)
+#     )
+
+#     row = cursor.fetchone()
+
+#     cursor.close()
+#     conn.close()
+
+#     if not row:
+#         return None
+
+#     return row[0]
 
 
 # Before generating a new plan, update the patient record
 
-def update_patient(
-    patient_id: int,
-    patient_info
-):
+# def update_patient(
+#     patient_id: int,
+#     patient_info
+# ):
 
-    conn = get_connection()
-    cursor = conn.cursor()
+#     conn = get_connection()
+#     cursor = conn.cursor()
 
-    query = """
-    UPDATE patients
-    SET
-        name = %s,
-        age = %s,
-        diagnosis = %s,
-        concerns = %s
-    WHERE id = %s;
-    """
+#     query = """
+#     UPDATE patients
+#     SET
+#         name = %s,
+#         age = %s,
+#         diagnosis = %s,
+#         concerns = %s
+#     WHERE id = %s;
+#     """
 
-    cursor.execute(
-        query,
-        (
-            patient_info["name"],
-            patient_info["age"],
-            patient_info["diagnosis"],
-            ", ".join(patient_info["concerns"]),
-            patient_id
-        )
-    )
+#     cursor.execute(
+#         query,
+#         (
+#             patient_info["name"],
+#             patient_info["age"],
+#             patient_info["diagnosis"],
+#             ", ".join(patient_info["concerns"]),
+#             patient_id
+#         )
+#     )
 
-    conn.commit()
+#     conn.commit()
 
-    cursor.close()
-    conn.close()
+#     cursor.close()
+#     conn.close()
