@@ -220,3 +220,22 @@ A typical session looks like this:
 ## License
 
 This project is for internal or educational use unless otherwise specified by the repository owner.
+
+
+Milestone 9
+
+✅ 9.1 Planner
+
+✅ 9.2 Executor + Skills
+
+⬜ 9.3 LLM Tool Execution
+
+⬜ 9.4 ReAct Loop
+
+⬜ 9.5 Memory
+
+⬜ 9.6 Multi-agent Collaboration
+
+⬜ 9.7 Clinical Safety
+
+⬜ 9.8 Streamlit Integration
