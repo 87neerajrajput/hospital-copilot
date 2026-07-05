@@ -1,6 +1,7 @@
-import asyncio
 
 from pydantic import BaseModel, Field
+
+from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -9,6 +10,8 @@ from graph.state import HealthcareState
 #from tools.db_tools import save_report
 
 from hospital_mcp.hospital_client import HospitalMCPClient
+
+load_dotenv()
 
 # ==========================================================
 # MCP CLIENT
@@ -33,7 +36,7 @@ llm = ChatGroq(
 structured_llm = llm.with_structured_output(Reports)
 
 
-def report_agent(state: HealthcareState):
+async def report_agent(state: HealthcareState):
 
     print("\n=== REPORT AGENT ===")
 
@@ -251,12 +254,10 @@ def report_agent(state: HealthcareState):
 
     patient_id = state["patient_id"]
 
-    clinical_result = asyncio.run(
-        mcp.save_report(
-            patient_id=patient_id,
-            report_type="clinical",
-            report_content=response["clinical_report"]
-        )
+    clinical_result = await mcp.save_report(
+        patient_id=patient_id,
+        report_type="clinical",
+        report_content=response["clinical_report"]
     )
 
     if clinical_result["success"]:
@@ -271,12 +272,10 @@ def report_agent(state: HealthcareState):
 
 
 
-    parent_result = asyncio.run(
-        mcp.save_report(
-            patient_id=patient_id,
-            report_type="parent",
-            report_content=response["parent_report"]
-        )
+    parent_result = await mcp.save_report(
+        patient_id=patient_id,
+        report_type="parent",
+        report_content=response["parent_report"]
     )
 
     if parent_result["success"]:

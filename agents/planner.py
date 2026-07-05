@@ -1,5 +1,3 @@
-import asyncio
-import os
 from typing import List
 from pydantic import BaseModel, Field
 from langchain_groq import ChatGroq
@@ -39,8 +37,8 @@ class TherapyPlan(BaseModel):
 # 2. Initialize the Groq model
 # Low temperature (0) keeps the extraction strict and deterministic
 llm = ChatGroq(
-    #model="llama-3.3-70b-versatile", 
-    model="llama-3.1-8b-instant",
+    model="llama-3.3-70b-versatile", 
+    #model="llama-3.1-8b-instant",
     temperature=0
 )
 
@@ -52,7 +50,7 @@ structured_llm = llm.with_structured_output(TherapyPlan)
 
 
 
-def planning_agent(state: HealthcareState):
+async def planning_agent(state: HealthcareState):
     print("\n=== Planning Agent ===")
     patient_info = state['patient_info']
     retrieved_docs = state["retrieved_docs"]
@@ -228,13 +226,12 @@ def planning_agent(state: HealthcareState):
 
     therapy_plan = profile.model_dump()
 
-    result = asyncio.run(
-        mcp.save_therapy_plan(
-            state["patient_id"],
-            patient_info,
-            therapy_plan,
-        )
-    )
+    result = await mcp.save_therapy_plan(
+                state["patient_id"],
+                patient_info,
+                therapy_plan,
+            )
+    
 
     if result["success"]:
 

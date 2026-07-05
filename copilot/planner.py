@@ -1,27 +1,28 @@
 """
 planner.py
 
-Milestone 9.1
+Natural Language Understanding (NLU) layer for the Copilot.
 
-LLM Planner
+Responsibilities
+----------------
+1. Understand the therapist request.
+2. Extract structured workflow information.
+3. Return a WorkflowRequest.
 
-Receives a therapist request and converts it into a
-structured execution plan.
+The Planner NEVER creates execution plans.
 
-The planner ONLY creates plans.
+Execution planning is handled by:
 
-It NEVER executes anything.
+    WorkflowBuilder
+        ↓
+    DependencyResolver
 """
-
-from typing import List, Dict
 
 from pydantic import BaseModel, Field
 
 from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
-
-from copilot.skill_registry import SKILLS
 
 load_dotenv()
 
@@ -30,168 +31,143 @@ load_dotenv()
 # ==========================================================
 
 llm = ChatGroq(
-    model="llama-3.1-8b-instant",
+    model="llama-3.3-70b-versatile",
     temperature=0,
 )
 
 # ==========================================================
-# PLAN MODELS
+# MODELS
 # ==========================================================
 
 
-class PlanStep(BaseModel):
-
-    skill: str = Field(
-        description="Business skill to use"
-    )
-
-    task: str = Field(
-        description="Business task inside the skill"
-    )
-
-    arguments: Dict = Field(
-        default_factory=dict
-    )
-
-
-class ExecutionPlan(BaseModel):
+class WorkflowRequest(BaseModel):
 
     goal: str
 
-    steps: List[PlanStep]
+    intent: str
+
+    entities: dict = Field(default_factory=dict)
 
 
 # ==========================================================
-# STRUCTURED LLM
+# STRUCTURED OUTPUT
 # ==========================================================
 
-planner_llm = llm.with_structured_output(
-    ExecutionPlan
+workflow_llm = llm.with_structured_output(
+    WorkflowRequest
 )
 
-
 # ==========================================================
-# BUILD SKILL PROMPT
-# ==========================================================
-
-def build_skill_prompt():
-
-    prompt = []
-
-    prompt.append("Available Skills\n")
-
-    for skill_name, skill in SKILLS.items():
-
-        prompt.append(f"{skill_name.title()}")
-
-        prompt.append("-" * len(skill_name))
-
-        prompt.append(skill["description"])
-
-        prompt.append("")
-
-        prompt.append("Tasks:")
-
-        for task, description in skill["tasks"].items():
-
-            prompt.append(
-                f"- {task}: {description}"
-            )
-
-        prompt.append("")
-
-    return "\n".join(prompt)
-
-
-# ==========================================================
-# SYSTEM PROMPT
-# ==========================================================
-
-SYSTEM_PROMPT = f"""
-You are the Clinical Planner.
-
-Your ONLY responsibility is to convert the therapist's request
-into an execution plan.
-
-You NEVER answer the therapist.
-
-You NEVER explain your reasoning.
-
-You ONLY create execution plans.
-
-{build_skill_prompt()}
-
-Rules
-
-1. Use ONLY the available skills.
-
-2. Skill names MUST exactly match the registry. Use lowercase only.
-
-3. Use ONLY the available tasks.
-
-4. Generate the minimum number of steps.
-
-5. Extract patient names whenever possible.
-
-6. Never invent runtime values.
-
-For example:
-
-If patient_id is not yet known, leave arguments empty.
-
-The Executor will fill them later.
-
-7. Never invent skills.
-
-8. Never invent tasks.
-"""
-
-# ==========================================================
-# BUILD PLAN
+# BUILD WORKFLOW REQUEST
 # ==========================================================
 
 
-def build_plan(user_request: str) -> ExecutionPlan:
+def build_workflow_request(
+    user_request: str,
+    intent: str,
+) -> WorkflowRequest:
+    """
+    Convert a therapist request into a structured
+    WorkflowRequest.
+
+    The Supervisor already determines the intent.
+
+    This function only extracts entities.
+    """
 
     prompt = f"""
-    {SYSTEM_PROMPT}
+    You are the Natural Language Understanding component
+    of a Hospital Therapist Copilot.
 
-    Therapist Request:
+    Your ONLY responsibility is to extract structured
+    information from the therapist request.
+
+    You NEVER create execution steps.
+
+    You NEVER create workflows.
+
+    You NEVER mention skills.
+
+    You NEVER mention tasks.
+
+    The intent has already been determined.
+
+    Use this exact intent:
+
+    {intent}
+
+    --------------------------------------
+
+    Return ONLY:
+
+    goal
+
+    intent
+
+    entities
+
+    --------------------------------------
+
+    Known entity names
+
+    patient_name
+
+    report_type
+
+    diagnosis
+
+    therapy_type
+
+    --------------------------------------
+
+    Examples
+
+    Therapist:
+    Find Miller and load his latest therapy plan.
+
+    Output
+
+    goal:
+    Find Miller and load his latest therapy plan.
+
+    intent:
+    therapy_lookup
+
+    entities:
+    {{
+        "patient_name": "Miller"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+    Generate parent report for Miller.
+
+    Output
+
+    goal:
+    Generate parent report for Miller.
+
+    intent:
+    report_generation
+
+    entities:
+    {{
+        "patient_name": "Miller",
+        "report_type": "parent"
+    }}
+
+    --------------------------------------
+
+    Therapist Request
 
     {user_request}
     """
 
-    plan = planner_llm.invoke(prompt)
+    request = workflow_llm.invoke(prompt)
 
-    return plan
+    request.intent = intent
 
+    request.goal = user_request
 
-# ==========================================================
-# DEBUG
-# ==========================================================
-
-if __name__ == "__main__":
-
-    questions = [
-
-        "Give activities for poor joint attention.",
-
-        "Find patient Miller.",
-
-        "Show Miller's latest therapy plan.",
-
-        "Generate therapy plan for Miller.",
-
-        "Generate report for Miller."
-
-    ]
-
-    for question in questions:
-
-        print("\n=======================================")
-
-        print(question)
-
-        plan = build_plan(question)
-
-        print(plan.model_dump_json(indent=2))
+    return request

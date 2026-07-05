@@ -15,6 +15,10 @@ Supported Tasks
 - save_report
 """
 
+from agents.report import report_agent
+
+from graph.state import HealthcareState
+
 from hospital_mcp.hospital_client import HospitalMCPClient
 
 
@@ -62,20 +66,64 @@ class ReportSkill:
         arguments: dict,
         context: dict,
     ):
-        """
-        Placeholder.
 
-        The actual Report Generation Agent
-        will be integrated in Milestone 9.3.
-        """
+        patient = context.get("patient")
 
-        report = context.get("report")
+        if patient is None:
 
-        return {
+            raise ValueError(
+                "Patient not available in execution context."
+            )
 
-            "report": report
+        therapy_plan = context.get("therapy_plan")
 
-        }
+        if therapy_plan is None:
+
+            raise ValueError(
+                "Therapy plan not available in execution context."
+            )
+
+        qa_result = context.get(
+            "qa_result"
+        )
+
+        state = HealthcareState(
+
+            patient_form=None,
+
+            user_query="",
+
+            assessment_summary=None,
+
+            patient_info=patient,
+
+            patient_id=patient["id"],
+
+            therapy_plan=therapy_plan,
+
+            plan_id=context.get("plan_id"),
+
+            retrieved_docs=None,
+
+            qa_result=qa_result,
+
+            approval_status=None,
+
+            clinical_report=None,
+
+            parent_report=None,
+
+            clinical_report_id=None,
+
+            parent_report_id=None,
+
+            next_agent="",
+
+        )
+
+        result = await report_agent(state)
+
+        return result
 
     # ======================================================
     # SAVE REPORT

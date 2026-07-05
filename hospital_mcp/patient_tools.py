@@ -19,7 +19,8 @@ def search_patients(search_text):
             id,
             name,
             age,
-            diagnosis
+            diagnosis,
+            concerns
         FROM patients
         WHERE LOWER(name)
         LIKE LOWER(%s)
@@ -40,7 +41,8 @@ def search_patients(search_text):
                 "id": row[0],
                 "name": row[1],
                 "age": row[2],
-                "diagnosis": row[3]
+                "diagnosis": row[3],
+                "concerns": row[4].split(", ") if row[4] else []
             }
             for row in rows
         ]

@@ -57,13 +57,20 @@ class KnowledgeSkill:
 
         query = arguments.get("query", "")
 
+        print("\n========== KNOWLEDGE SKILL ==========")
+        print("Query :", repr(query))
+        print("Arguments :", arguments)
+        print("=====================================\n")
+
         documents = await self.mcp.search_knowledge(
             query=query,
             k=3,
         )
 
+        print("Retrieved docs:", len(documents))
+
         return {
 
-            "documents": documents
+            "knowledge": documents
 
         }

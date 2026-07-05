@@ -39,7 +39,7 @@ llm = ChatGroq(
 structured_llm = llm.with_structured_output(QAResult)
 
 
-def qa_agent(state: HealthcareState):
+async def qa_agent(state: HealthcareState):
 
     print("\n=== QA AGENT ===")
 

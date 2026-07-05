@@ -16,6 +16,10 @@ Supported Tasks
 - save_plan
 """
 
+from agents.planner import planning_agent
+
+from graph.state import HealthcareState
+
 from hospital_mcp.hospital_client import HospitalMCPClient
 
 
@@ -70,12 +74,6 @@ class TherapySkill:
         arguments: dict,
         context: dict,
     ):
-        """
-        Placeholder.
-
-        The actual therapy planner agent will be integrated
-        in Milestone 9.3.
-        """
 
         patient = context.get("patient")
 
@@ -85,11 +83,53 @@ class TherapySkill:
                 "Patient not available in execution context."
             )
 
-        return {
+        assessment_summary = context.get(
+            "assessment_summary",
+            {}
+        )
 
-            "therapy_plan": None
+        knowledge = context.get(
+            "knowledge",
+            []
+        )
 
-        }
+        state = HealthcareState(
+
+            patient_form=None,
+
+            user_query="",
+
+            assessment_summary=assessment_summary,
+
+            patient_info=patient,
+
+            patient_id=patient["id"],
+
+            therapy_plan=None,
+
+            plan_id=None,
+
+            retrieved_docs=knowledge,
+
+            qa_result=None,
+
+            approval_status=None,
+
+            clinical_report=None,
+
+            parent_report=None,
+
+            clinical_report_id=None,
+
+            parent_report_id=None,
+
+            next_agent="",
+
+        )
+
+        result = await planning_agent(state)
+
+        return result
 
     # ======================================================
     # LOAD LATEST PLAN
@@ -129,7 +169,7 @@ class TherapySkill:
 
         return {
 
-            "therapy_plan": therapy_plan
+            "therapy_plan": therapy_plan["therapy_plan"]
 
         }
 

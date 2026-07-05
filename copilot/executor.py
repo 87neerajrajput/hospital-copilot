@@ -1,22 +1,29 @@
 """
 executor.py
 
-Milestone 9.2
-
 Execution Engine
 
 Responsibilities
 ----------------
 1. Execute every plan step.
 2. Dispatch to the correct Skill.
-3. Maintain execution context.
+3. Resolve runtime arguments.
+4. Maintain execution context.
 """
 
-from copilot.planner import ExecutionPlan
+from copilot.execution_plan import (
+    PlanStep,
+    ExecutionPlan,
+)
 
-from copilot.skills.knowledge import KnowledgeSkill
+from copilot.argument_resolver import ArgumentResolver
+
+from copilot.registry_index import RegistryIndex
+
 from copilot.skills.patient import PatientSkill
 from copilot.skills.therapy import TherapySkill
+from copilot.skills.knowledge import KnowledgeSkill
+from copilot.skills.qa import QASkill
 from copilot.skills.report import ReportSkill
 
 
@@ -24,13 +31,17 @@ class Executor:
 
     def __init__(self):
 
-        self.skills = {
+        self.registry = RegistryIndex()
 
-            "knowledge": KnowledgeSkill(),
+        self.skills = {
 
             "patient": PatientSkill(),
 
             "therapy": TherapySkill(),
+
+            "knowledge": KnowledgeSkill(),
+
+            "qa": QASkill(),
 
             "report": ReportSkill(),
 
@@ -57,23 +68,35 @@ class Executor:
 
             print(f"Task  : {step.task}")
 
-            print(f"Args  : {step.arguments}")
+            print(f"Original Args : {step.arguments}")
 
-            print("-----------------------------")
+            print("--------------------------------")
 
-            skill = self.skills.get(step.skill)
-
-            if skill is None:
+            if step.skill not in self.skills:
 
                 raise ValueError(
-                    f"Unknown Skill: {step.skill}"
+
+                    f"Unknown skill: {step.skill}"
+
                 )
+
+            skill = self.skills[step.skill]
+
+            resolved_arguments = ArgumentResolver.resolve(
+
+                step=step,
+
+                context=context,
+
+            )
+
+            print(f"Resolved Args : {resolved_arguments}")
 
             result = await skill.execute(
 
                 task=step.task,
 
-                arguments=step.arguments,
+                arguments=resolved_arguments,
 
                 context=context,
 
@@ -85,13 +108,14 @@ class Executor:
 
             print()
 
-            # ==========================================
-            # Update Execution Context
-            # ==========================================
-
             self._update_context(
-                context,
-                result,
+
+                step=step,
+
+                context=context,
+
+                result=result,
+
             )
 
         print("\n========== FINAL CONTEXT ==========\n")
@@ -107,71 +131,69 @@ class Executor:
     # ======================================================
 
     def _update_context(
+
         self,
+
+        step,
+
         context: dict,
+
         result: dict,
+
     ):
 
         if not result:
 
             return
 
-        # -----------------------------
-        # Patient Search
-        # -----------------------------
+        # ----------------------------------------------
+        # Lookup task metadata
+        # ----------------------------------------------
+
+        task_info = self.registry.get_task(
+
+            skill=step.skill,
+
+            task=step.task,
+
+        )
+
+        if task_info:
+
+            produces = task_info["definition"]["produces"]
+
+            for artifact in produces:
+
+                if artifact in result:
+
+                    context[artifact] = result[artifact]
+
+        # ----------------------------------------------
+        # Search results
+        # ----------------------------------------------
 
         if "patients" in result:
 
-            patients = result["patients"]
+            context["patients"] = result["patients"]
 
-            if patients:
+            if result["patients"]:
 
-                context["patients"] = patients
+                context["patient"] = result["patients"][0]
 
-                context["patient"] = patients[0]
+        # ----------------------------------------------
+        # Runtime identifiers
+        # ----------------------------------------------
 
-        # -----------------------------
-        # Patient Load
-        # -----------------------------
+        for key in (
 
-        if "patient" in result:
+            "patient_id",
 
-            if result["patient"]:
+            "plan_id",
 
-                context["patient"] = result["patient"]
+            "report_id",
 
-        # -----------------------------
-        # Therapy Plan
-        # -----------------------------
+        ):
 
-        if "therapy_plan" in result:
+            if key in result:
 
-            if result["therapy_plan"]:
-
-                context["therapy_plan"] = result["therapy_plan"]
-
-        # -----------------------------
-        # Generated Report
-        # -----------------------------
-
-        if "report" in result:
-
-            if result["report"]:
-
-                context["report"] = result["report"]
-
-        # -----------------------------
-        # Save IDs
-        # -----------------------------
-
-        if "plan_id" in result:
-
-            context["plan_id"] = result["plan_id"]
-
-        if "report_id" in result:
-
-            context["report_id"] = result["report_id"]
-
-        if "patient_id" in result:
-
-            context["patient_id"] = result["patient_id"]
+                context[key] = result[key]

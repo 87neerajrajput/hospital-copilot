@@ -239,3 +239,14 @@ Milestone 9
 ⬜ 9.7 Clinical Safety
 
 ⬜ 9.8 Streamlit Integration
+
+
+Why this is a major milestone
+
+We have now separated responsibilities cleanly:
+
+Supervisor → Understands the therapist's intent.
+Planner → Decides what needs to happen.
+Argument Resolver → Supplies runtime values from context.
+Executor → Calls the appropriate skill.
+Skills → Perform the actual business logic.
