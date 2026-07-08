@@ -13,10 +13,10 @@ TEST_REQUESTS = [
 
     # "Generate a therapy plan for Aston Martin.",
 
-    # "Generate a parent report for Aston Martin.",
+    # "Review Aston Martin's therapy plan.",
 
-    #"Validate Aston Martin's therapy plan.",
-
+     "Generate report for Aston Martin.",
+ 
 ]
 
 
@@ -48,11 +48,51 @@ async def main():
         # Execution
         # --------------------------------------------------
 
-        context = await executor.execute(plan)
+        state = await executor.execute(plan)
 
-        print("\nReturned Context\n")
+        print("\nReturned Execution State\n")
 
-        pprint(context)
+        print("Status :", state.status)
+        print("Waiting:", state.waiting_for_approval)
+        print("Pending:", state.pending_step)
+
+        if state.waiting_for_approval:
+
+            decision = input(
+                "\nApprove? (approve/reject): "
+            ).strip().lower()
+
+            if decision not in (
+                "approve",
+                "approved",
+                "reject",
+                "rejected",
+                "y",
+                "yes",
+                "n",
+                "no",
+            ):
+                print("Invalid decision.")
+                return
+
+            state = await executor.resume(
+                state=state,
+                decision=decision,
+            )
+
+        print("\n========== AFTER RESUME ==========\n")
+
+        print("Status :", state.status)
+
+        print("Current Step :", state.current_step)
+
+        print("Waiting :", state.waiting_for_approval)
+
+        print("Plan ID :", state.context.get("plan_id"))
+
+        print("\nContext\n")
+
+        pprint(state.context)
 
 
 if __name__ == "__main__":

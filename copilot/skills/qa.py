@@ -10,10 +10,19 @@ class QASkill:
         arguments: dict,
         context: dict,
     ):
+        
+        print(f"\nQA Task: {task}")
 
         if task == "validate_therapy_plan":
 
             return await self.validate_therapy_plan(
+                arguments,
+                context,
+            )
+
+        elif task == "review_therapy_plan":
+
+            return await self.review_therapy_plan(
                 arguments,
                 context,
             )
@@ -75,6 +84,8 @@ class QASkill:
 
             approval_status=None,
 
+            report_types=None,
+
             clinical_report=None,
 
             parent_report=None,
@@ -90,3 +101,23 @@ class QASkill:
         result = await qa_agent(state)
 
         return result
+    
+
+    # ======================================================
+    # REVIEW THERAPY PLAN
+    # ======================================================
+
+    async def review_therapy_plan(
+        self,
+        arguments: dict,
+        context: dict,
+    ):
+
+        result = await self.validate_therapy_plan(
+            arguments,
+            context,
+        )
+
+        return {
+            "therapy_review": result["qa_result"]
+        }

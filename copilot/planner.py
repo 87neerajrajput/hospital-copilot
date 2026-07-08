@@ -113,6 +113,9 @@ def build_workflow_request(
     patient_name
 
     report_type
+        - "parent"
+        - "clinical"
+        - "both"
 
     diagnosis
 
@@ -141,20 +144,45 @@ def build_workflow_request(
     --------------------------------------
 
     Therapist:
-    Generate parent report for Miller.
-
-    Output
-
-    goal:
-    Generate parent report for Miller.
-
-    intent:
-    report_generation
+    Generate a parent report for Miller.
 
     entities:
     {{
         "patient_name": "Miller",
         "report_type": "parent"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+    Generate a clinical report for Miller.
+
+    entities:
+    {{
+        "patient_name": "Miller",
+        "report_type": "clinical"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+    Generate parent and clinical report for Miller.
+
+    entities:
+    {{
+        "patient_name": "Miller",
+        "report_type": "both"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+    Generate report for Miller.
+
+    entities:
+    {{
+        "patient_name": "Miller",
+        "report_type": "both"
     }}
 
     --------------------------------------

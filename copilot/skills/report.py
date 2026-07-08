@@ -87,6 +87,17 @@ class ReportSkill:
             "qa_result"
         )
 
+        requested = arguments.get("report_type", "both")
+
+        if requested == "parent":
+            report_types = ["parent"]
+
+        elif requested == "clinical":
+            report_types = ["clinical"]
+
+        else:
+            report_types = ["clinical", "parent"]
+
         state = HealthcareState(
 
             patient_form=None,
@@ -108,6 +119,8 @@ class ReportSkill:
             qa_result=qa_result,
 
             approval_status=None,
+
+            report_types=report_types,
 
             clinical_report=None,
 

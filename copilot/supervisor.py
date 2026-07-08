@@ -49,6 +49,8 @@ class SupervisorDecision(BaseModel):
         description="Reason for selecting the intent."
     )
 
+    report_types: list[str] | None = None
+
 
 # ==========================================================
 # LLM
@@ -90,7 +92,17 @@ def build_supervisor_prompt() -> str:
     )
 
     prompt.append(
-        "Return ONLY the detected intent and a short reason.\n"
+        """Return ONLY:
+
+        - intent
+        - reason
+        - report_types
+
+        Rules:
+
+        - report_types should only be populated when the intent is report_generation.
+        - For all other intents, return null.
+        """
     )
 
     prompt.append(
@@ -99,6 +111,93 @@ def build_supervisor_prompt() -> str:
 
     prompt.append(
         "Do NOT generate execution steps.\n"
+    )
+
+    prompt.append(
+        """
+        Classification Rules
+        ====================
+
+        1. If the therapist refers to a patient by name
+        (for example: "Find John", "Show John's therapy plan",
+        "Generate report for John"), always choose the patient-
+        related intent, NOT knowledge_search.
+
+        2. knowledge_search is ONLY for requests asking for
+        general clinical information or definitions, such as:
+        - What is sensory integration?
+        - Explain dyspraxia.
+        - What causes toe walking?
+
+        3. patient_search is ONLY for locating an existing patient.
+
+        4. therapy_lookup retrieves an existing therapy plan.
+
+        5. therapy_generation creates a NEW therapy plan.
+
+        6. qa validates a newly generated therapy plan before
+        human approval.
+
+        7. therapy_review reviews an existing saved therapy plan
+        that has already been approved.
+
+        8. report_generation creates a report from an existing
+        therapy plan.
+
+        9. If the intent is report_generation, determine which report(s) the therapist requested.
+
+        Report Types:
+
+        - "parent" → Parent Report
+        - "clinical" → Clinical Report
+
+        Examples:
+
+        "Generate a parent report for John."
+        → report_types = ["parent"]
+
+        "Generate a clinical report for John."
+        → report_types = ["clinical"]
+
+        "Generate a parent and clinical report for John."
+        → report_types = ["parent", "clinical"]
+
+        "Generate a report for John."
+        → report_types = ["parent", "clinical"]
+
+        Examples
+
+        User:
+        Generate a parent report for Aston Martin.
+
+        Output:
+        {{
+        "intent": "report_generation",
+        "reason": "The therapist wants a parent report for an existing therapy plan.",
+        "report_types": ["parent"]
+        }}
+
+        User:
+        Generate a clinical report for Aston Martin.
+
+        Output:
+        {{
+        "intent": "report_generation",
+        "reason": "The therapist wants a clinical report for an existing therapy plan.",
+        "report_types": ["clinical"]
+        }}
+
+        User:
+        Generate a report for Aston Martin.
+
+        Output:
+        {{
+        "intent": "report_generation",
+        "reason": "The therapist wants both reports for an existing therapy plan.",
+        "report_types": ["parent", "clinical"]
+        }}
+
+        """
     )
 
     prompt.append(
@@ -162,6 +261,8 @@ class ClinicalSupervisor:
         print(f"Intent : {decision.intent}")
 
         print(f"Reason : {decision.reason}")
+
+        print(f"Report Types : {decision.report_types}")
 
         print("\n===============================\n")
 
@@ -238,7 +339,7 @@ if __name__ == "__main__":
 
     supervisor = ClinicalSupervisor()
 
-    question = "Validate Aston Martin's therapy plan."
+    question = "Find Aston Martin."
 
     plan = supervisor.plan(question)
 

@@ -22,6 +22,8 @@ class HealthcareState(TypedDict):
 
     approval_status: str | None
 
+    report_types: list[str] | None
+
     clinical_report: str | None
     parent_report: str | None
 

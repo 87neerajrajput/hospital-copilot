@@ -32,13 +32,11 @@ class ArgumentResolver:
         # Patient-dependent tasks
         # =====================================================
 
-        if task in (
+        # =====================================================
+        # Load patient plans
+        # =====================================================
 
-            "load_latest_plan",
-
-            "generate_therapy_plan",
-
-        ):
+        if task == "load_patient_plans":
 
             patient = context.get("patient")
 
@@ -49,12 +47,55 @@ class ArgumentResolver:
                 if patient_id:
 
                     arguments.setdefault(
-
                         "patient_id",
-
                         patient_id,
-
                     )
+
+        # =====================================================
+        # Load latest therapy plan
+        # =====================================================
+
+        elif task == "load_latest_plan":
+
+            patient = context.get("patient")
+
+            if patient:
+
+                arguments.setdefault(
+                    "patient_id",
+                    patient["id"],
+                )
+
+            plans = context.get("therapy_plan_list", [])
+
+            if plans:
+
+                latest_plan = plans[0]
+
+                arguments.setdefault(
+                    "plan_id",
+                    latest_plan["id"],
+                )
+
+        # =====================================================
+        # Generate therapy plan
+        # =====================================================
+
+        elif task == "generate_therapy_plan":
+
+            patient = context.get("patient")
+
+            if patient:
+
+                patient_id = patient.get("id")
+
+                if patient_id:
+
+                    arguments.setdefault(
+                        "patient_id",
+                        patient_id,
+                    )
+
 
         # =====================================================
         # Report generation
@@ -86,6 +127,16 @@ class ArgumentResolver:
 
                 )
 
+            report_type = step.arguments.get("report_type")
+
+            if report_type:
+
+                arguments.setdefault(
+                    "report_type",
+                    report_type,
+                )
+
+
         elif task == "search_information":
 
             patient = context.get("patient")
@@ -102,5 +153,43 @@ class ArgumentResolver:
                     query += " " + " ".join(concerns)
 
                 arguments.setdefault("query", query)
+
+
+    
+
+        # =====================================================
+        # Save Therapy Plan
+        # =====================================================
+
+        elif task == "save_plan":
+
+            patient = context.get("patient")
+            therapy_plan = context.get("therapy_plan")
+
+            if patient:
+
+                arguments.setdefault(
+                    "patient_id",
+                    patient["id"],
+                )
+
+                arguments.setdefault(
+                    "patient_info",
+                    patient,
+                )
+
+            if therapy_plan:
+
+                arguments.setdefault(
+                    "therapy_plan",
+                    therapy_plan,
+                )
+
+        from pprint import pprint
+
+        print("\n========== RESOLVED ARGUMENTS ==========")
+        print(f"Task : {task}")
+        pprint(arguments)
+        print("========================================")
 
         return arguments

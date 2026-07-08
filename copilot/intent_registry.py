@@ -145,6 +145,30 @@ INTENTS = {
         ],
     },
 
+
+    # =====================================================
+    # THERAPY REVIEW FOR EXISTING PLANS
+    # =====================================================
+
+    "therapy_review": {
+
+        "description": (
+            "Review an existing therapy plan."
+        ),
+
+        "artifact": "therapy_review",
+
+        "operation": "read",
+
+        "allowed_skills": [
+
+            "patient",
+            "therapy",
+            "qa",
+
+        ],
+    },
+
     # =====================================================
     # Reports
     # =====================================================

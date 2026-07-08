@@ -46,6 +46,18 @@ class TherapySkill:
                 arguments,
                 context,
             )
+        
+        elif task == "load_patient_plans":
+
+            patient_id = arguments["patient_id"]
+
+            plans = await self.mcp.get_patient_plans(
+                patient_id
+            )
+
+            return {
+                "therapy_plan_list": plans
+            }
 
         elif task == "load_latest_plan":
 
@@ -115,6 +127,8 @@ class TherapySkill:
 
             approval_status=None,
 
+            report_types=None,
+
             clinical_report=None,
 
             parent_report=None,
@@ -127,7 +141,7 @@ class TherapySkill:
 
         )
 
-        result = await planning_agent(state)
+        result = await planning_agent(state, auto_save=False)
 
         return result
 
@@ -141,35 +155,17 @@ class TherapySkill:
         context: dict,
     ):
 
-        patient = context.get("patient")
-
-        if patient is None:
-
-            raise ValueError(
-                "Patient not available in execution context."
-            )
-
-        plans = await self.mcp.get_patient_plans(
-            patient["id"]
-        )
-
-        if not plans:
-
-            return {
-
-                "therapy_plan": None
-
-            }
-
-        latest_plan_id = plans[0]["id"]
+        plan_id = arguments["plan_id"]
 
         therapy_plan = await self.mcp.get_therapy_plan(
-            latest_plan_id
+            plan_id
         )
 
         return {
 
-            "therapy_plan": therapy_plan["therapy_plan"]
+            "therapy_plan": therapy_plan["therapy_plan"],
+
+            "plan_id": plan_id,
 
         }
 
@@ -199,7 +195,7 @@ class TherapySkill:
                 "Therapy plan not available in execution context."
             )
 
-        plan_id = await self.mcp.save_therapy_plan(
+        result = await self.mcp.save_therapy_plan(
 
             patient_id=patient["id"],
 
@@ -210,7 +206,9 @@ class TherapySkill:
         )
 
         return {
+            
+            "saved_plan": result,
 
-            "plan_id": plan_id
+            "plan_id": result["plan_id"],
 
         }

@@ -869,6 +869,8 @@ with left_col:
 
                 "approval_status": None,
 
+                "report_types": None,
+
                 "clinical_report": None,
 
                 "parent_report": None,
@@ -884,9 +886,11 @@ with left_col:
             print(initial_state["assessment_summary"])
             print("===================================\n")
 
-            result = graph.invoke(
-                initial_state,
-                config=config
+            result = asyncio.run(
+                graph.ainvoke(
+                    initial_state,
+                    config=config,
+                )
             )
 
             st.session_state.plan_generated = True
@@ -1196,13 +1200,14 @@ with left_col:
                     if st.button("✅ Approve Plan", use_container_width=True):
                         with st.spinner("Preparing clinical and parent reports..."):
 
-                            graph.invoke(
-                                Command(
-                                    resume="approved"
-                                ),
-                                config=config
+                            asyncio.run(
+                                graph.ainvoke(
+                                    Command(
+                                        resume="approved",
+                                    ),
+                                    config=config,
+                                )
                             )
-
                             st.session_state.waiting_for_approval = False
                             
                             st.session_state.reports_generated = True
@@ -1225,11 +1230,13 @@ with left_col:
                         use_container_width=True
                     ):
 
-                        graph.invoke(
-                            Command(
-                                resume="rejected"
-                            ),
-                            config=config
+                        asyncio.run(
+                            graph.ainvoke(
+                                Command(
+                                    resume="rejected",
+                                ),
+                                config=config,
+                            )
                         )
 
                         st.session_state.waiting_for_approval = False

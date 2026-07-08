@@ -27,7 +27,9 @@ SKILLS = {
 
                 "produces": [
                     "knowledge"
-                ]
+                ],
+
+                "requires_approval": False,
 
             }
 
@@ -55,7 +57,9 @@ SKILLS = {
 
                 "produces": [
                     "patient"
-                ]
+                ],
+
+                "requires_approval": False,
 
             },
 
@@ -75,7 +79,9 @@ SKILLS = {
 
                 "produces": [
                     "patient"
-                ]
+                ],
+
+                "requires_approval": False,
 
             },
 
@@ -93,7 +99,9 @@ SKILLS = {
 
                 "produces": [
                     "patient"
-                ]
+                ],
+
+                "requires_approval": False,
 
             },
 
@@ -113,7 +121,9 @@ SKILLS = {
 
                 "produces": [
                     "patient"
-                ]
+                ],
+
+                "requires_approval": False,
 
             }
 
@@ -144,7 +154,31 @@ SKILLS = {
 
                 "produces": [
                     "therapy_plan"
-                ]
+                ],
+
+                "requires_approval": True,
+
+            },
+
+            "load_patient_plans": {
+
+                "purpose":
+                    "Retrieve all therapy plans belonging to a patient.",
+
+                "operation": "read",
+
+                "description":
+                    "Load all therapy plans for a patient.",
+
+                "requires": [
+                    "patient"
+                ],
+
+                "produces": [
+                    "therapy_plan_list"
+                ],
+
+                "requires_approval": False,
 
             },
 
@@ -159,12 +193,14 @@ SKILLS = {
                     "Load the latest therapy plan.",
 
                 "requires": [
-                    "patient"
+                    "therapy_plan_list"
                 ],
 
                 "produces": [
                     "therapy_plan"
-                ]
+                ],
+
+                "requires_approval": False,
 
             },
 
@@ -184,7 +220,9 @@ SKILLS = {
 
                 "produces": [
                     "saved_plan"
-                ]
+                ],
+
+                "requires_approval": False,
 
             }
 
@@ -214,7 +252,55 @@ SKILLS = {
 
                 "produces": [
                     "qa_result"
-                ]
+                ],
+
+                "requires_approval": False,
+            },
+
+            "review_therapy_plan": {
+                "purpose": "Review an existing therapy plan for clinical quality.",
+                "operation": "read",
+                "description": "Review the latest therapy plan.",
+                "requires": [
+                    "therapy_plan"
+                ],
+                "produces": [
+                    "therapy_review"
+                ],
+                "requires_approval": False,
+            }
+
+        }
+
+    },
+
+
+    "approval": {
+
+        "description": "Human approval workflow",
+
+        "tasks": {
+
+            "review_plan": {
+
+                "purpose":
+                    "Pause execution and request therapist approval before continuing the workflow.",
+
+                "operation": "approve",
+
+                "description":
+                    "Request human approval for the generated therapy plan.",
+
+                "requires": [
+                    "therapy_plan"
+                ],
+
+                "produces": [
+                    "approval_status"
+                ],
+
+                "requires_approval": False,
+
             }
 
         }
@@ -243,7 +329,9 @@ SKILLS = {
 
                 "produces": [
                     "report"
-                ]
+                ],
+
+                "requires_approval": False,
 
             },
 
@@ -263,7 +351,9 @@ SKILLS = {
 
                 "produces": [
                     "saved_report"
-                ]
+                ],
+
+                "requires_approval": False,
 
             }
 

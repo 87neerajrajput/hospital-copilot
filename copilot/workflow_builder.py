@@ -15,6 +15,8 @@ The WorkflowBuilder never performs dependency resolution itself.
 It delegates that responsibility to DependencyResolver.
 """
 
+from html import entities
+
 from copilot.intent_registry import INTENTS
 from copilot.dependency_resolver import DependencyResolver
 from copilot.execution_plan import (
@@ -88,6 +90,15 @@ class WorkflowBuilder:
 
             )
 
+        from pprint import pprint
+
+        print("\n========== BUILT PLAN STEPS ==========")
+
+        for step in steps:
+            pprint(step.model_dump())
+
+        print("======================================")
+
         return ExecutionPlan(
 
             goal=goal,
@@ -108,6 +119,8 @@ class WorkflowBuilder:
         entities: dict,
     ) -> dict:
 
+        print("\nTask:", task_name)
+        print("Entities:", entities)
         arguments = {}
 
         # -----------------------------------------

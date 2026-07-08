@@ -50,7 +50,7 @@ structured_llm = llm.with_structured_output(TherapyPlan)
 
 
 
-async def planning_agent(state: HealthcareState):
+async def planning_agent(state: HealthcareState, auto_save: bool = True):
     print("\n=== Planning Agent ===")
     patient_info = state['patient_info']
     retrieved_docs = state["retrieved_docs"]
@@ -226,25 +226,27 @@ async def planning_agent(state: HealthcareState):
 
     therapy_plan = profile.model_dump()
 
-    result = await mcp.save_therapy_plan(
-                state["patient_id"],
-                patient_info,
-                therapy_plan,
-            )
-    
+    plan_id = None
 
-    if result["success"]:
+    if auto_save:
 
-        plan_id = result["plan_id"]
+        result = await mcp.save_therapy_plan(
+            state["patient_id"],
+            patient_info,
+            therapy_plan,
+        )
 
-        print(result["message"])
+        if result["success"]:
 
-    else:
+            plan_id = result["plan_id"]
 
-        print(result["message"])
+            print(result["message"])
 
+        else:
+
+            print(result["message"])
 
     return {
         "therapy_plan": therapy_plan,
-        "plan_id": plan_id
+        "plan_id": plan_id,
     }

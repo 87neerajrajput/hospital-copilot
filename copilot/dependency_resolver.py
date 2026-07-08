@@ -21,6 +21,8 @@ Pure dependency resolution.
 
 from copilot.registry_index import RegistryIndex
 
+from copilot.skill_registry import SKILLS
+
 
 class DependencyResolver:
 
@@ -60,7 +62,66 @@ class DependencyResolver:
 
         )
 
+        resolved = self._insert_workflow_steps(resolved)
+
+        print("\n========== RESOLVED TASKS ==========\n")
+
+        for i, task in enumerate(resolved, start=1):
+
+            print(
+                f"{i}. "
+                f"{task['skill']}."
+                f"{task['task']}"
+            )
+
+        print()
+
         return resolved
+    
+
+
+    def _insert_workflow_steps(
+        self,
+        tasks: list,
+    ):
+        """
+        Insert orchestration steps that are not dependency-driven.
+        """
+
+        workflow = []
+
+        for task in tasks:
+
+            workflow.append(task)
+
+            if (
+                task["skill"] == "therapy"
+                and task["task"] == "generate_therapy_plan"
+            ):
+
+                workflow.append(
+                    self.registry.get_task(
+                        "qa",
+                        "validate_therapy_plan",
+                    )
+                )
+
+                workflow.append(
+                    self.registry.get_task(
+                        "approval",
+                        "review_plan",
+                    )
+                )
+
+                workflow.append(
+                    self.registry.get_task(
+                        "therapy",
+                        "save_plan",
+                    )
+                )
+
+        return workflow
+
 
     # ---------------------------------------------------------
 
@@ -141,6 +202,14 @@ class DependencyResolver:
         # -------------------------------------------------
 
         producer = candidates[0]
+
+        print("\nProducer Selected")
+        print("Skill :", producer["skill"])
+        print("Task  :", producer["task"])
+        print("Definition:")
+        print(producer["definition"])
+        print("Requires Approval:",
+            producer["definition"].get("requires_approval"))
 
         # Resolve requirements first
 

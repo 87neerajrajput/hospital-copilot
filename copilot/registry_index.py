@@ -14,6 +14,9 @@ from collections import defaultdict
 
 from copilot.skill_registry import SKILLS
 
+import inspect
+import copilot.skill_registry as sr
+
 
 class RegistryIndex:
 
@@ -112,4 +115,29 @@ class RegistryIndex:
 
             (skill, task) in self.tasks
 
+        )
+    
+
+    # ---------------------------------------------------------
+    # HUMAR APPROVAL
+    # ---------------------------------------------------------
+
+    def requires_approval(
+        self,
+        skill: str,
+        task: str,
+    ) -> bool:
+
+        task_info = self.get_task(
+            skill,
+            task,
+        )
+
+        if not task_info:
+
+            return False
+
+        return task_info["definition"].get(
+            "requires_approval",
+            False,
         )

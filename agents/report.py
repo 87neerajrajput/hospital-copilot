@@ -7,7 +7,7 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from graph.state import HealthcareState
-#from tools.db_tools import save_report
+from typing import Optional
 
 from hospital_mcp.hospital_client import HospitalMCPClient
 
@@ -22,9 +22,9 @@ mcp = HospitalMCPClient()
 
 class Reports(BaseModel):
 
-    clinical_report: str = Field(description="Detailed clinical report")
+    clinical_report: Optional[str] = Field(default=None, description="Detailed clinical report")
 
-    parent_report: str = Field(description="Parent-friendly report")
+    parent_report: Optional[str] = Field(default=None, description="Parent-friendly report")
 
 
 llm = ChatGroq(
@@ -48,7 +48,15 @@ async def report_agent(state: HealthcareState):
 
     qa_result = state["qa_result"]
 
-    prompt = f"""
+    report_types = state["report_types"]
+
+    if report_types is None:
+        report_types = ["clinical", "parent"]
+    
+    print(f"\n=== {report_types} ===")
+
+
+    PROMPT = f"""
     You are an experienced pediatric occupational therapist responsible for creating professional therapy documentation.
 
     PATIENT INFORMATION
@@ -82,7 +90,25 @@ async def report_agent(state: HealthcareState):
 
     The reports should appear as final clinical documentation.
 
-    Generate TWO reports.
+    REQUESTED REPORT TYPES
+    ======================
+    {", ".join(report_types)}
+
+    Generate ONLY the requested report(s).
+
+    Rules:
+
+    If only "clinical" is requested:
+    - Generate ONLY the Clinical Report.
+
+    If only "parent" is requested:
+    - Generate ONLY the Parent Report.
+
+    If both are requested:
+    - Generate TWO completely independent reports.
+
+    The Clinical Report and Parent Report must NOT be rewritten versions of each other.
+
 
     ====================================================
     REPORT 1: CLINICAL REPORT
@@ -216,81 +242,115 @@ async def report_agent(state: HealthcareState):
     - Do not return markdown code blocks.
     - Return plain formatted report text.
 
-    Return:
+    Return ONLY the requested report(s).
 
-    1. Clinical Report
-    2. Parent Report
+    Examples:
+
+    If Clinical is requested:
+    Return only the Clinical Report.
+
+    If Parent is requested:
+    Return only the Parent Report.
+
+    If both are requested:
+    Return both reports.
 
     Each Report should not be more than 700 words.
 
     """
 
+    SYSTEM_PROMPT = """
+    You are a senior pediatric occupational therapist responsible for producing high-quality therapy documentation.
+
+    You may be asked to generate one or more report types.
+
+    The supported report types are:
+
+    1. Clinical Report
+    - Audience:
+        Occupational therapists, clinical supervisors, physicians, hospital records.
+    - Style:
+        Formal, professional, clinically precise.
+    - Include:
+        Clinical terminology, assessment findings, treatment rationale, measurable therapy goals, functional outcomes, recommendations, and monitoring plans.
+
+    2. Parent Report
+    - Audience:
+        Parents and caregivers.
+    - Style:
+        Warm, supportive, encouraging, easy to understand.
+    - Include:
+        Simple explanations, week-wise Therapy Goals plan, practical home guidance, positive reinforcement, and realistic expectations.
+    - Avoid medical jargon whenever possible.
+
+    When both reports are requested:
+
+    - Treat them as TWO independent documents.
+    - Do NOT paraphrase one report into the other.
+    - Do NOT duplicate sections unnecessarily.
+    - Tailor the language, structure, and level of detail to the intended audience.
+
+    Maintain consistency with the therapy plan while adapting the presentation appropriately.
+
+    Never mention:
+    - Internal QA
+    - Validation
+    - Review comments
+    - PASS/FAIL
+    - Internal workflow
+    """
+
     reports = structured_llm.invoke([
-        SystemMessage(
-            content="""
-            You are a senior pediatric occupational therapist responsible for creating professional therapy documentation.
-
-            Your responsibilities are:
-
-            - Create accurate clinical reports suitable for therapists, supervisors, and hospital records.
-            - Create parent-friendly reports that explain therapy plans in simple language.
-            - Maintain consistency with the therapy goals, weekly schedule, and home program.
-            - Present information clearly and professionally.
-            - Use clinical language in clinical reports.
-            - Use supportive, non-technical language in parent reports.
-
-            Do not mention internal QA processes, validation results, or review comments.
-
-            Generate reports that are practical, professional, and ready for clinical use.
-            """
-        ),
-        HumanMessage(content=prompt)
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(content=PROMPT)
     ])
 
-    response = reports.model_dump()
-
-    print("\nClinical Report Generated")
-    print("\nParent Report Generated")
+    response = reports.model_dump(exclude_none=True)
 
     patient_id = state["patient_id"]
 
-    clinical_result = await mcp.save_report(
-        patient_id=patient_id,
-        report_type="clinical",
-        report_content=response["clinical_report"]
-    )
+    if response.get("clinical_report"):
 
-    if clinical_result["success"]:
+        print("\nClinical Report Generated")
 
-        clinical_report_id = clinical_result["report_id"]
+        clinical_result = await mcp.save_report(
+            patient_id=patient_id,
+            report_type="clinical",
+            report_content=response["clinical_report"],
+        )
 
-        print(clinical_result["message"])
+        if clinical_result["success"]:
 
-    else:
+            clinical_report_id = clinical_result["report_id"]
+            print(clinical_result["message"])
 
-        print(clinical_result["message"])
+        else:
+
+            print(clinical_result["message"])
 
 
+    if response.get("parent_report"):
 
-    parent_result = await mcp.save_report(
-        patient_id=patient_id,
-        report_type="parent",
-        report_content=response["parent_report"]
-    )
+        print("\nParent Report Generated")
 
-    if parent_result["success"]:
+        parent_result = await mcp.save_report(
+            patient_id=patient_id,
+            report_type="parent",
+            report_content=response["parent_report"],
+        )
 
-        parent_report_id = parent_result["report_id"]
+        if parent_result["success"]:
 
-        print(parent_result["message"])
+            parent_report_id = parent_result["report_id"]
+            print(parent_result["message"])
 
-    else:
+        else:
 
-        print(parent_result["message"])
+            print(parent_result["message"])
 
     return {
-        "clinical_report": response["clinical_report"],
-        "parent_report": response["parent_report"],
+        "clinical_report": response.get("clinical_report"),
+        "parent_report": response.get("parent_report"),
         "clinical_report_id": clinical_report_id,
-        "parent_report_id": parent_report_id
+        "parent_report_id": parent_report_id,
     }

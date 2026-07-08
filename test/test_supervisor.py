@@ -26,33 +26,33 @@ questions = [
     # Patient
     # ---------------------------------------------
 
-    "Find Aston Martin.",
+    #"Find Aston Martin.",
 
     # ---------------------------------------------
     # Therapy
     # ---------------------------------------------
 
-    "Show Aston Martin's latest therapy plan.",
+    #"Show Aston Martin's latest therapy plan.",
 
-    "Generate a therapy plan for Aston Martin.",
+    #"Generate a therapy plan for Aston Martin.",
 
     # ---------------------------------------------
     # Reports
     # ---------------------------------------------
 
-    "Generate a parent report for Aston Martin.",
+    "Generate report for Aston Martin.",
 
     # ---------------------------------------------
     # QA
     # ---------------------------------------------
 
-    "Validate Aston Martin's therapy plan.",
+    #"Validate Aston Martin's therapy plan.",
 
     # ---------------------------------------------
     # Knowledge
     # ---------------------------------------------
 
-    "What is sensory integration?",
+    #"What is sensory integration?",
 
 ]
 

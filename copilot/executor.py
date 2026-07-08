@@ -24,7 +24,16 @@ from copilot.skills.patient import PatientSkill
 from copilot.skills.therapy import TherapySkill
 from copilot.skills.knowledge import KnowledgeSkill
 from copilot.skills.qa import QASkill
+from copilot.skills.approval import ApprovalSkill
 from copilot.skills.report import ReportSkill
+
+from copilot.execution_state import ExecutionState
+
+from copilot.approval import (
+    ApprovalService,
+    ApprovalStatus,
+)
+from graph import state
 
 
 class Executor:
@@ -32,6 +41,8 @@ class Executor:
     def __init__(self):
 
         self.registry = RegistryIndex()
+
+        self.approval = ApprovalService()
 
         self.skills = {
 
@@ -45,6 +56,8 @@ class Executor:
 
             "report": ReportSkill(),
 
+             "approval": ApprovalSkill(),
+
         }
 
     # ======================================================
@@ -56,13 +69,41 @@ class Executor:
         plan: ExecutionPlan,
     ):
 
-        context = {}
+        state = ExecutionState(
+            plan=plan,
+        )
 
         print("\n========== EXECUTOR ==========\n")
 
-        for index, step in enumerate(plan.steps, start=1):
+        await self._run_steps(
 
-            print(f"Executing Step {index}")
+            state,
+
+        )
+
+        if state.status == ApprovalStatus.WAITING:
+            return state
+
+        return state
+
+
+    # ======================================================
+    # EXECUTE HUMAN APPROVAL PLAN
+    # ======================================================
+
+    async def _run_steps(
+        self,
+        state: ExecutionState,
+    ):
+
+        for index in range(
+            state.current_step,
+            len(state.plan.steps),
+        ):
+
+            step = state.plan.steps[index]
+
+            print(f"Executing Step {index + 1}")
 
             print(f"Skill : {step.skill}")
 
@@ -86,21 +127,74 @@ class Executor:
 
                 step=step,
 
-                context=context,
+                context=state.context,
 
             )
+
+            # ---------------------------------------------
+            # Workflow control step
+            # ---------------------------------------------
+
+            if step.skill == "approval":
+
+                print("\n========== WAITING FOR HUMAN APPROVAL ==========\n")
+
+                ApprovalService.wait_for_approval(state)
+
+                state.pending_step = index
+
+                return
 
             print(f"Resolved Args : {resolved_arguments}")
 
-            result = await skill.execute(
+            # ---------------------------------------------
+            # Human Approval
+            # ---------------------------------------------
 
-                task=step.task,
+            if (
+                step.skill == "approval"
+                and step.task == "review_plan"
+            ):
 
-                arguments=resolved_arguments,
+                print("\n========== WAITING FOR HUMAN APPROVAL ==========\n")
 
-                context=context,
+                ApprovalService.wait_for_approval(state)
 
-            )
+                state.pending_step = index
+
+                state.current_step = index
+
+                return
+
+            # ---------------------------------------------
+            # Execute Skill
+            # ---------------------------------------------
+
+            if step.skill == "approval":
+
+                result = await skill.execute(
+
+                    task=step.task,
+
+                    arguments=resolved_arguments,
+
+                    context=state.context,
+
+                    state=state,
+
+                )
+
+            else:
+
+                result = await skill.execute(
+
+                    task=step.task,
+
+                    arguments=resolved_arguments,
+
+                    context=state.context,
+
+                )
 
             print("Result")
 
@@ -108,23 +202,43 @@ class Executor:
 
             print()
 
+            # ---------------------------------------------
+            # Approval pauses execution
+            # ---------------------------------------------
+
+            if state.waiting_for_approval:
+
+                state.pending_step = index
+
+                return state
+
+
             self._update_context(
 
                 step=step,
 
-                context=context,
+                context=state.context,
 
                 result=result,
 
             )
 
-        print("\n========== FINAL CONTEXT ==========\n")
+            state.current_step = index + 1
 
-        print(context)
+        state.status = "COMPLETED"
 
-        print("\n===================================\n")
 
-        return context
+        if state.current_step == len(state.plan.steps):
+
+            state.status = "COMPLETED"
+
+            print("\n========== FINAL CONTEXT ==========\n")
+
+            print(state.context)
+
+            print("\n===================================\n")
+
+
 
     # ======================================================
     # UPDATE CONTEXT
@@ -197,3 +311,92 @@ class Executor:
             if key in result:
 
                 context[key] = result[key]
+
+
+    # ======================================================
+    # RESUME EXECUTION
+    # ======================================================
+
+    async def resume(
+        self,
+        state: ExecutionState,
+        decision: str,
+    ) -> ExecutionState:
+        """
+        Resume execution after a human approval.
+        """
+
+        print("\n========== RESUME ==========")
+        print("Decision received:", decision)
+        print("============================")
+
+
+        if not state.waiting_for_approval:
+            return state
+
+        # ----------------------------------------
+        # Get the pending approval step
+        # ----------------------------------------
+
+        pending = state.pending_step
+
+        step = state.plan.steps[pending]
+
+
+        # This should always be the approval skill
+        skill = self.skills[step.skill]
+
+        # ----------------------------------------
+        # Execute approval node
+        # ----------------------------------------
+
+        result = await skill.execute(
+
+            task=step.task,
+
+            arguments={
+                "decision": decision,
+            },
+
+            context=state.context,
+
+            state=state,
+
+        )
+
+
+        self._update_context(
+
+                    step=step,
+
+                    context=state.context,
+
+                    result=result,
+
+                )
+
+        state.waiting_for_approval = False
+        state.pending_step = None
+
+        if result["approval_status"] == "rejected":
+
+            state.waiting_for_approval = False
+            state.pending_step = None
+            state.status = "REJECTED"
+            return state
+        
+
+        # ----------------------------------------
+        # Clear waiting state
+        # ----------------------------------------
+
+        # Continue with the step AFTER approval
+        state.current_step = pending + 1
+
+        # ----------------------------------------
+        # Continue remaining workflow
+        # ----------------------------------------
+
+        await self._run_steps(state)
+
+        return state
