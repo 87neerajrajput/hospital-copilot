@@ -13,11 +13,15 @@ TEST_REQUESTS = [
 
     # "Show Aston Martin's therapy history.",
 
-     "List Aston Martin's therapy plans."
+    #"Show Aston Martin's latest therapy plan.",
+
+    # "List Aston Martin's therapy plans."
 
     # "Find Aston Martin's therapy history."
 
     # "Generate a therapy plan for Aston Martin.",
+
+    "Show Aston Martin's previous therapy plan.",
 
     # "Review Aston Martin's therapy plan.",
 

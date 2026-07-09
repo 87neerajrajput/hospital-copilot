@@ -70,12 +70,28 @@ class ArgumentResolver:
 
             if plans:
 
-                latest_plan = plans[0]
-
-                arguments.setdefault(
-                    "plan_id",
-                    latest_plan["id"],
+                selector = arguments.get(
+                    "plan_selector",
+                    "latest",
                 )
+
+                if selector == "latest":
+
+                    selected_plan = plans[0]
+
+                elif selector == "previous":
+
+                    selected_plan = (
+                        plans[1]
+                        if len(plans) > 1
+                        else plans[0]
+                    )
+
+                else:
+                    # fallback
+                    selected_plan = plans[0]
+
+                arguments["plan_id"] = selected_plan["id"]
 
         # =====================================================
         # Generate therapy plan

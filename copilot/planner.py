@@ -121,6 +121,8 @@ def build_workflow_request(
 
     therapy_type
 
+    plan_selector
+
     --------------------------------------
 
     Examples
@@ -183,6 +185,66 @@ def build_workflow_request(
     {{
         "patient_name": "Miller",
         "report_type": "both"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+
+    Show Aston Martin's latest therapy plan.
+
+    Output
+
+    goal:
+    Show Aston Martin's latest therapy plan.
+
+    intent:
+    therapy_lookup
+
+    entities:
+    {{
+        "patient_name": "Aston Martin",
+        "plan_selector": "latest"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+
+    Show Aston Martin's previous therapy plan.
+
+    Output
+
+    goal:
+    Show Aston Martin's previous therapy plan.
+
+    intent:
+    therapy_lookup
+
+    entities:
+    {{
+        "patient_name": "Aston Martin",
+        "plan_selector": "previous"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+
+    Show Aston Martin's oldest therapy plan.
+
+    Output
+
+    goal:
+    Show Aston Martin's oldest therapy plan.
+
+    intent:
+    therapy_lookup
+
+    entities:
+    {{
+        "patient_name": "Aston Martin",
+        "plan_selector": "oldest"
     }}
 
     --------------------------------------

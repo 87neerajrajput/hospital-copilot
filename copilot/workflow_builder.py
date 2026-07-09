@@ -156,5 +156,12 @@ class WorkflowBuilder:
             if "therapy_type" in entities:
 
                 arguments["therapy_type"] = entities["therapy_type"]
+                
+
+        if task_name == "load_latest_plan":
+
+            if "plan_selector" in entities:
+
+                arguments["plan_selector"] = entities["plan_selector"]
 
         return arguments

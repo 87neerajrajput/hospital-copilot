@@ -34,7 +34,11 @@ questions = [
 
     #"Generate a therapy plan for Aston Martin.",
 
-    #"Show Aston Martin's latest therapy plan.",
+    "Show Aston Martin's latest therapy plan.",
+
+    #"Show Aston Martin's previous therapy plan."
+
+    #"Show Aston Martin's oldest therapy plan."
 
     #"Show Aston Martin's therapy history."
 

@@ -131,23 +131,41 @@ def build_supervisor_prompt() -> str:
 
         3. patient_search is ONLY for locating an existing patient.
 
+        If the therapist refers to ONE therapy plan
+        (latest, previous, oldest, plan #84, or a plan by date),
+        choose therapy_lookup.
+
+        If the therapist refers to MULTIPLE therapy plans
+        (history, all plans, previous plans, therapy history),
+        choose therapy_history.
+
         4. therapy_lookup
 
-            Choose this intent when the therapist wants to VIEW,
-            OPEN or RETRIEVE one therapy plan.
+            Choose this intent when the therapist wants to retrieve
+            ONE specific therapy plan.
+
+            This includes selecting a plan by:
+
+            - latest
+            - previous
+            - oldest
+            - plan number
+            - date
 
             Examples:
 
             - Show Aston Martin's latest therapy plan.
-            - Open Aston Martin's therapy plan.
-            - Show therapy plan #82.
+            - Show Aston Martin's previous therapy plan.
+            - Show Aston Martin's oldest therapy plan.
+            - Open therapy plan #84.
+            - Open Aston Martin's July 5 therapy plan.
 
         ------------------------------------
 
         5. therapy_history
 
-            Choose this intent when the therapist wants to browse,
-            list, count, or inspect MULTIPLE therapy plans.
+            Choose this intent ONLY when the therapist wants to
+            browse or inspect MULTIPLE therapy plans.
 
             Examples:
 
