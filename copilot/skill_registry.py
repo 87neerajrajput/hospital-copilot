@@ -21,7 +21,7 @@ SKILLS = {
                 "operation": "read",
 
                 "description":
-                    "Search the clinical knowledge base.",
+                    "Retrieve relevant clinical knowledge to support therapy plan generation.",
 
                 "requires": [],
 
@@ -51,7 +51,7 @@ SKILLS = {
                 "operation": "read",      
 
                 "description":
-                    "Search patient.",
+                    "Locate an existing patient by name or other identifying information.",
 
                 "requires": [],
 
@@ -145,7 +145,7 @@ SKILLS = {
                 "operation": "create",
 
                 "description":
-                    "Generate therapy plan.",
+                    "Generate a new therapy plan using the patient's assessment and clinical knowledge.",
 
                 "requires": [
                     "patient",
@@ -168,7 +168,7 @@ SKILLS = {
                 "operation": "read",
 
                 "description":
-                    "Load all therapy plans for a patient.",
+                    "Retrieve the complete therapy plan history for a patient.",
 
                 "requires": [
                     "patient"
@@ -190,7 +190,7 @@ SKILLS = {
                 "operation": "read",
 
                 "description":
-                    "Load the latest therapy plan.",
+                    "Load the most recent therapy plan for a patient.",
 
                 "requires": [
                     "therapy_plan_list"
@@ -212,7 +212,7 @@ SKILLS = {
                 "operation": "write",
 
                 "description":
-                    "Save therapy plan.",
+                    "Save an approved therapy plan to the patient's clinical record.",
 
                 "requires": [
                     "therapy_plan"
@@ -244,7 +244,7 @@ SKILLS = {
                 "operation": "validate",
 
                 "description":
-                    "Validate therapy plan.",
+                    "Perform an internal quality review of a newly generated therapy plan before approval.",
 
                 "requires": [
                     "therapy_plan"
@@ -260,7 +260,7 @@ SKILLS = {
             "review_therapy_plan": {
                 "purpose": "Review an existing therapy plan for clinical quality.",
                 "operation": "read",
-                "description": "Review the latest therapy plan.",
+                "description": "Perform a clinical review of an existing therapy plan at the therapist's request.",
                 "requires": [
                     "therapy_plan"
                 ],
@@ -289,7 +289,7 @@ SKILLS = {
                 "operation": "approve",
 
                 "description":
-                    "Request human approval for the generated therapy plan.",
+                    "Request therapist approval before saving a newly generated therapy plan.",
 
                 "requires": [
                     "therapy_plan"
@@ -321,7 +321,7 @@ SKILLS = {
                 "operation": "create",
 
                 "description":
-                    "Generate reports.",
+                    "Generate parent reports, clinical reports, or both from an existing therapy plan.",
 
                 "requires": [
                     "therapy_plan"
@@ -343,7 +343,7 @@ SKILLS = {
                 "operation": "write",
                 
                 "description":
-                    "Save reports.",
+                    "Save generated reports to the patient's clinical record.",
 
                 "requires": [
                     "report"

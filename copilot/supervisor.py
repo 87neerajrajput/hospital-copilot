@@ -131,20 +131,75 @@ def build_supervisor_prompt() -> str:
 
         3. patient_search is ONLY for locating an existing patient.
 
-        4. therapy_lookup retrieves an existing therapy plan.
+        4. therapy_lookup
 
-        5. therapy_generation creates a NEW therapy plan.
+            Choose this intent when the therapist wants to VIEW,
+            OPEN or RETRIEVE one therapy plan.
 
-        6. qa validates a newly generated therapy plan before
+            Examples:
+
+            - Show Aston Martin's latest therapy plan.
+            - Open Aston Martin's therapy plan.
+            - Show therapy plan #82.
+
+        ------------------------------------
+
+        5. therapy_history
+
+            Choose this intent when the therapist wants to browse,
+            list, count, or inspect MULTIPLE therapy plans.
+
+            Examples:
+
+            - Show Aston Martin's therapy history.
+            - List Aston Martin's therapy plans.
+            - Show all therapy plans.
+            - Show previous therapy plans.
+            - How many therapy plans does Aston Martin have?
+
+            
+        ------------------------------------
+
+        6. therapy_generation
+
+        Choose this intent when the therapist wants to create
+        a NEW therapy plan.
+
+        Examples:
+        - Generate a therapy plan.
+        - Create a therapy plan.
+        - Make a therapy plan.
+
+        ------------------------------------
+
+        7. therapy_review
+
+            Choose this intent when the therapist wants a clinical
+            evaluation or quality review of an existing therapy plan.
+
+            Examples:
+
+            - Review Aston Martin's therapy plan.
+            - Re-review Aston Martin's therapy plan.
+            - Clinically review Aston Martin's therapy plan.
+
+        ------------------------------------
+
+        8. qa validates a newly generated therapy plan before
         human approval.
 
-        7. therapy_review reviews an existing saved therapy plan
-        that has already been approved.
+        9. report_generation
 
-        8. report_generation creates a report from an existing
-        therapy plan.
+        Choose this intent when the therapist wants to generate
+        clinical reports or parent reports from an existing therapy plan.
 
-        9. If the intent is report_generation, determine which report(s) the therapist requested.
+        Examples:
+        - Generate a parent report.
+        - Generate a clinical report.
+        - Generate both reports.
+
+
+        10. If the intent is report_generation, determine which report(s) the therapist requested.
 
         Report Types:
 

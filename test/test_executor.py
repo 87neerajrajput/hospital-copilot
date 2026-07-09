@@ -11,11 +11,17 @@ TEST_REQUESTS = [
 
     # "Show Aston Martin's latest therapy plan.",
 
+    # "Show Aston Martin's therapy history.",
+
+     "List Aston Martin's therapy plans."
+
+    # "Find Aston Martin's therapy history."
+
     # "Generate a therapy plan for Aston Martin.",
 
     # "Review Aston Martin's therapy plan.",
 
-     "Generate report for Aston Martin.",
+    # "Generate report for Aston Martin.",
  
 ]
 
@@ -93,6 +99,24 @@ async def main():
         print("\nContext\n")
 
         pprint(state.context)
+
+        plans = state.context.get("therapy_plan_list")
+
+        if plans:
+
+            print("\n========== THERAPY HISTORY ==========\n")
+
+            print(f"Total Plans : {len(plans)}\n")
+
+            for index, plan in enumerate(plans, start=1):
+
+                print(
+                    f"{index}. "
+                    f"Plan #{plan['id']}   "
+                    f"{plan['created_at']}"
+                )
+
+            print("\n=====================================")
 
 
 if __name__ == "__main__":

@@ -104,6 +104,24 @@ INTENTS = {
         ],
     },
 
+    "therapy_history": {
+
+        "description": (
+            "Retrieve the therapy history for an existing patient."
+        ),
+
+        "artifact": "therapy_plan_list",
+
+        "operation": "read",
+
+        "allowed_skills": [
+
+            "patient",
+            "therapy",
+
+        ],
+    },
+
     "therapy_generation": {
 
         "description": (

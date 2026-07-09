@@ -32,15 +32,31 @@ questions = [
     # Therapy
     # ---------------------------------------------
 
+    #"Generate a therapy plan for Aston Martin.",
+
     #"Show Aston Martin's latest therapy plan.",
 
-    #"Generate a therapy plan for Aston Martin.",
+    #"Show Aston Martin's therapy history."
+
+    #"Find Aston Martin's therapy history."
+    
+    # "List Aston Martin's therapy plans."
+
+    #"Show all therapy plans for Aston Martin."
+
+    # ---------------------------------------------
+    # Therapy Review
+    # ---------------------------------------------
+
+    #"Review Aston Martin's therapy plan."
 
     # ---------------------------------------------
     # Reports
     # ---------------------------------------------
 
-    "Generate report for Aston Martin.",
+    # "Generate report for Aston Martin.",
+
+    # "Generate a clinical report for Aston Martin.",
 
     # ---------------------------------------------
     # QA
@@ -53,6 +69,8 @@ questions = [
     # ---------------------------------------------
 
     #"What is sensory integration?",
+
+    #"Explain dyspraxia.",
 
 ]
 
