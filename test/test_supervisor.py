@@ -34,7 +34,7 @@ questions = [
 
     #"Generate a therapy plan for Aston Martin.",
 
-    "Show Aston Martin's latest therapy plan.",
+    #"Show Aston Martin's latest therapy plan.",
 
     #"Show Aston Martin's previous therapy plan."
 
@@ -47,6 +47,16 @@ questions = [
     # "List Aston Martin's therapy plans."
 
     #"Show all therapy plans for Aston Martin."
+
+    #"Compare Aston Martin's latest and previous therapy plans.",
+
+    # "Compare the latest two therapy plans for Aston Martin.",
+
+    "Compare plan 82 with plan 87 for Aston Martin.",
+
+    #"What changed between Aston Martin's latest and previous therapy plans?",
+
+    # "Compare today's therapy plan with the previous one for Aston Martin.",
 
     # ---------------------------------------------
     # Therapy Review

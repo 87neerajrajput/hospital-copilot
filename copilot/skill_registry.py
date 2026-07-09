@@ -204,6 +204,32 @@ SKILLS = {
 
             },
 
+
+            "load_selected_plans": {
+
+                "purpose": (
+                    "Load two therapy plans selected from a patient's therapy history."
+                ),
+
+                "operation": "read",
+
+                "description": (
+                    "Select two therapy plans (for example latest, previous, or specific plan IDs)."
+                ),
+
+                "requires": [
+                    "therapy_plan_list",
+                ],
+
+                "produces": [
+                    "selected_plans",
+                ],
+
+                "requires_approval": False,
+
+            },
+
+
             "save_plan": {
 
                 "purpose":
@@ -229,6 +255,44 @@ SKILLS = {
         }
 
     },
+
+
+    "comparison": {
+
+        "description": (
+            "Clinical comparison of therapy plans."
+        ),
+
+        "tasks": {
+
+            "compare_plans": {
+
+                "purpose": (
+                    "Compare two therapy plans and summarize the clinical differences."
+                ),
+
+                "operation": "compare",
+
+                "description": (
+                    "Generate a comparison between two therapy plans."
+                ),
+
+                "requires": [
+                    "selected_plans",
+                ],
+
+                "produces": [
+                    "therapy_comparison",
+                ],
+
+                "requires_approval": False,
+
+            },
+
+        },
+
+    },
+
 
     "qa": {
 

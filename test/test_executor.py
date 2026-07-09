@@ -21,7 +21,9 @@ TEST_REQUESTS = [
 
     # "Generate a therapy plan for Aston Martin.",
 
-    "Show Aston Martin's previous therapy plan.",
+    #"Show Aston Martin's previous therapy plan.",
+
+    "Compare plan 82 with plan 87 for Aston Martin.",
 
     # "Review Aston Martin's therapy plan.",
 

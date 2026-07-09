@@ -178,7 +178,28 @@ def build_supervisor_prompt() -> str:
             
         ------------------------------------
 
-        6. therapy_generation
+        6. therapy_comparison
+
+            Choose this intent when the therapist wants to compare
+            two therapy plans for the same patient.
+
+            Examples:
+
+            - Compare Aston Martin's latest and previous therapy plans.
+            - Compare the latest two therapy plans.
+            - Compare today's plan with the previous plan.
+            - Compare plan 82 with plan 87.
+            - What changed between Aston Martin's last two therapy plans?
+            - Compare the current therapy plan with the previous one.
+
+        Do NOT choose therapy_lookup when the therapist asks to compare plans.
+
+        Comparison is a separate workflow and should always use
+        therapy_comparison.
+
+        ------------------------------------------
+
+        7. therapy_generation
 
         Choose this intent when the therapist wants to create
         a NEW therapy plan.
@@ -190,7 +211,7 @@ def build_supervisor_prompt() -> str:
 
         ------------------------------------
 
-        7. therapy_review
+        8. therapy_review
 
             Choose this intent when the therapist wants a clinical
             evaluation or quality review of an existing therapy plan.
@@ -203,10 +224,10 @@ def build_supervisor_prompt() -> str:
 
         ------------------------------------
 
-        8. qa validates a newly generated therapy plan before
+        9. qa validates a newly generated therapy plan before
         human approval.
 
-        9. report_generation
+        10. report_generation
 
         Choose this intent when the therapist wants to generate
         clinical reports or parent reports from an existing therapy plan.
@@ -217,7 +238,7 @@ def build_supervisor_prompt() -> str:
         - Generate both reports.
 
 
-        10. If the intent is report_generation, determine which report(s) the therapist requested.
+        11. If the intent is report_generation, determine which report(s) the therapist requested.
 
         Report Types:
 

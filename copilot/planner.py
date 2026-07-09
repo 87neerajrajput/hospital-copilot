@@ -123,6 +123,10 @@ def build_workflow_request(
 
     plan_selector
 
+    left_plan_selector
+
+    right_plan_selector
+
     --------------------------------------
 
     Examples
@@ -248,6 +252,62 @@ def build_workflow_request(
     }}
 
     --------------------------------------
+
+    Therapist:
+
+    Compare Aston Martin's latest and previous therapy plans.
+
+    Output
+
+    goal:
+    Compare Aston Martin's latest and previous therapy plans.
+
+    intent:
+    therapy_comparison
+
+    entities:
+    {{
+        "patient_name": "Aston Martin",
+        "left_plan_selector": "latest",
+        "right_plan_selector": "previous"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+
+    Compare Aston Martin's last two therapy plans.
+
+    Output
+
+    intent:
+    therapy_comparison
+
+    entities:
+    {{
+        "patient_name": "Aston Martin",
+        "left_plan_selector": "latest",
+        "right_plan_selector": "previous"
+    }}
+
+    --------------------------------------
+
+    Therapist:
+
+    Compare the newest therapy plan with the previous one.
+
+    Output
+
+    intent:
+    therapy_comparison
+
+    entities:
+    {{
+        "left_plan_selector": "latest",
+        "right_plan_selector": "previous"
+    }}
+
+    ---------------------------------------
 
     Therapist Request
 

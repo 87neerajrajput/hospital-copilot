@@ -65,6 +65,13 @@ class TherapySkill:
                 arguments,
                 context,
             )
+        
+        elif task == "load_selected_plans":
+
+            return await self.load_selected_plans(
+                arguments,
+                context,
+            )
 
         elif task == "save_plan":
 
@@ -168,6 +175,59 @@ class TherapySkill:
             "plan_id": plan_id,
 
         }
+    
+    # ======================================================
+    # LOAD SELECTED PLANS
+    # ======================================================
+
+    async def load_selected_plans(
+        self,
+        arguments: dict,
+        context: dict,
+    ):
+
+        plans = context.get("therapy_plan_list", [])
+
+        if not plans:
+            raise ValueError("No therapy plans available.")
+
+        left_selector = str(arguments["left_plan_selector"])
+        right_selector = str(arguments["right_plan_selector"])
+
+        selected = []
+
+        for plan in plans:
+
+            plan_id = str(plan["id"])
+
+            if plan_id == left_selector:
+
+                therapy_plan = await self.mcp.get_therapy_plan(plan["id"])
+
+                selected.append(
+                    therapy_plan["therapy_plan"]
+                )
+
+            elif plan_id == right_selector:
+
+                therapy_plan = await self.mcp.get_therapy_plan(plan["id"])
+
+                selected.append(
+                    therapy_plan["therapy_plan"]
+                )
+
+        if len(selected) != 2:
+
+            raise ValueError(
+                "Unable to load both selected therapy plans."
+            )
+
+        return {
+
+            "selected_plans": selected
+
+        }
+
 
     # ======================================================
     # SAVE PLAN

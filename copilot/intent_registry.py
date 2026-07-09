@@ -89,7 +89,7 @@ INTENTS = {
     "therapy_lookup": {
 
         "description": (
-            "Retrieve an existing therapy plan."
+           "Retrieve a single therapy plan for a patient."
         ),
 
         "artifact": "therapy_plan",
@@ -137,6 +137,25 @@ INTENTS = {
             "patient",
             "knowledge",
             "therapy",
+
+        ],
+    },
+
+    "therapy_comparison": {
+
+        "description": (
+            "Compare two existing therapy plans for a patient."
+        ),
+
+        "artifact": "therapy_comparison",
+
+        "operation": "compare",
+
+        "allowed_skills": [
+
+            "patient",
+            "therapy",
+            "comparison",
 
         ],
     },

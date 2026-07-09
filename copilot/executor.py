@@ -22,6 +22,7 @@ from copilot.registry_index import RegistryIndex
 
 from copilot.skills.patient import PatientSkill
 from copilot.skills.therapy import TherapySkill
+from copilot.skills.comparison import ComparisonSkill
 from copilot.skills.knowledge import KnowledgeSkill
 from copilot.skills.qa import QASkill
 from copilot.skills.approval import ApprovalSkill
@@ -56,7 +57,9 @@ class Executor:
 
             "report": ReportSkill(),
 
-             "approval": ApprovalSkill(),
+            "approval": ApprovalSkill(),
+
+            "comparison": ComparisonSkill(),
 
         }
 

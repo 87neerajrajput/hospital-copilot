@@ -164,4 +164,19 @@ class WorkflowBuilder:
 
                 arguments["plan_selector"] = entities["plan_selector"]
 
+        
+        # -----------------------------------------
+        # Selected Plans
+        # -----------------------------------------
+
+        if task_name == "load_selected_plans":
+
+            if "left_plan_selector" in entities:
+
+                arguments["left_plan_selector"] = entities["left_plan_selector"]
+
+            if "right_plan_selector" in entities:
+
+                arguments["right_plan_selector"] = entities["right_plan_selector"]
+
         return arguments
