@@ -283,6 +283,7 @@ SKILLS = {
 
                 "produces": [
                     "therapy_comparison",
+                    "comparison_report",
                 ],
 
                 "requires_approval": False,

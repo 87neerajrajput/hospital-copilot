@@ -1,3 +1,6 @@
+
+from agents.comparison import comparison_agent
+
 class ComparisonSkill:
 
     async def execute(
@@ -26,10 +29,39 @@ class ComparisonSkill:
 
         selected_plans = context.get("selected_plans")
 
-        print("\n========== PLAN COMPARISON ==========")
+        if selected_plans is None:
 
-        print(selected_plans)
+            raise ValueError(
+                "Selected therapy plans not found."
+            )
+
+        if len(selected_plans) != 2:
+
+            raise ValueError(
+                "Exactly two therapy plans are required."
+            )
+
+        left_plan = selected_plans[0]
+
+        right_plan = selected_plans[1]
+
+        comparison = await comparison_agent(
+            left_plan,
+            right_plan,
+        )
+
+        from copilot.formatters.comparison_formatter import (
+            ComparisonFormatter
+        )
+
+        formatted_report = ComparisonFormatter.format(
+            comparison
+        )
 
         return {
-            "comparison": "placeholder"
+
+            "therapy_comparison": comparison,
+
+            "comparison_report": formatted_report,
+
         }

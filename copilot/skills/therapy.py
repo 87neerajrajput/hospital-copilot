@@ -204,9 +204,15 @@ class TherapySkill:
 
                 therapy_plan = await self.mcp.get_therapy_plan(plan["id"])
 
-                selected.append(
-                    therapy_plan["therapy_plan"]
-                )
+                selected.append({
+
+                    "plan_id": plan["id"],
+
+                    "created_at": plan.get("created_at"),
+
+                    "therapy_plan": therapy_plan["therapy_plan"]
+
+                })
 
             elif plan_id == right_selector:
 
