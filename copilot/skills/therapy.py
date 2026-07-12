@@ -191,36 +191,54 @@ class TherapySkill:
         if not plans:
             raise ValueError("No therapy plans available.")
 
-        left_selector = str(arguments["left_plan_selector"])
-        right_selector = str(arguments["right_plan_selector"])
+        left = str(arguments["left_plan_selector"]).strip().lower()
+        right = str(arguments["right_plan_selector"]).strip().lower()
+
+        import re
+
+        def resolve_selector(selector):
+
+            if selector == "latest":
+                return plans[0]
+
+            if selector == "previous":
+                return plans[1] if len(plans) > 1 else plans[0]
+
+            match = re.search(r"\d+", selector)
+
+            if match:
+
+                plan_id = int(match.group())
+
+                for plan in plans:
+
+                    if plan["id"] == plan_id:
+                        return plan
+
+            return None
+
+
+        left_plan = resolve_selector(left)
+        right_plan = resolve_selector(right)
 
         selected = []
 
-        for plan in plans:
+        for plan in (left_plan, right_plan):
 
-            plan_id = str(plan["id"])
+            if plan is None:
+                continue
 
-            if plan_id == left_selector:
+            therapy_plan = await self.mcp.get_therapy_plan(plan["id"])
 
-                therapy_plan = await self.mcp.get_therapy_plan(plan["id"])
+            selected.append({
 
-                selected.append({
+                "plan_id": plan["id"],
 
-                    "plan_id": plan["id"],
+                "created_at": plan.get("created_at"),
 
-                    "created_at": plan.get("created_at"),
+                "therapy_plan": therapy_plan["therapy_plan"]
 
-                    "therapy_plan": therapy_plan["therapy_plan"]
-
-                })
-
-            elif plan_id == right_selector:
-
-                therapy_plan = await self.mcp.get_therapy_plan(plan["id"])
-
-                selected.append(
-                    therapy_plan["therapy_plan"]
-                )
+            })
 
         if len(selected) != 2:
 
@@ -229,9 +247,7 @@ class TherapySkill:
             )
 
         return {
-
             "selected_plans": selected
-
         }
 
 

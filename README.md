@@ -267,3 +267,19 @@ Patient Timeline
         ↓
 Milestone 14
 Clinical Memory
+
+
+
+
+*************** Where we stand in the roadmap ***************
+
+Phase 1  LangGraph Learning                   ✅
+Phase 2  Database + Persistence               ✅
+Phase 3  Agentic Workflow                     ✅
+Phase 4  Human Review                         ✅
+Phase 5  QA Agent                             ✅
+Phase 6  Reports                              ✅
+Phase 7  Streamlit                            ✅
+Phase 8  Patient Management                   ✅
+Phase 9  Therapy Versioning                   ✅
+Phase 10 AI Clinical Copilot                  ✅
