@@ -14,6 +14,7 @@ Business dependency resolution belongs to DependencyResolver.
 """
 
 from copy import deepcopy
+import re
 
 
 class ArgumentResolver:
@@ -70,28 +71,43 @@ class ArgumentResolver:
 
             if plans:
 
-                selector = arguments.get(
-                    "plan_selector",
-                    "latest",
-                )
+                selector = arguments.get("plan_selector", "latest").strip().lower()
+
+                print("\nSelector:", selector)
 
                 if selector == "latest":
 
-                    selected_plan = plans[0]
+                    arguments["plan_id"] = plans[0]["id"]
 
                 elif selector == "previous":
 
-                    selected_plan = (
-                        plans[1]
+                    arguments["plan_id"] = (
+                        plans[1]["id"]
                         if len(plans) > 1
-                        else plans[0]
+                        else plans[0]["id"]
                     )
 
                 else:
-                    # fallback
-                    selected_plan = plans[0]
 
-                arguments["plan_id"] = selected_plan["id"]
+                    match = re.search(
+                        r"(?:plan\s*#?\s*)?(\d+)$",
+                        selector,
+                        re.IGNORECASE,
+                    )
+
+                    print("Regex Match:", match)
+
+                    if match:
+
+                        arguments["plan_id"] = int(match.group(1))
+
+                        print("Matched Plan ID:", arguments["plan_id"])
+
+                    else:
+
+                        print("No regex match")
+
+                        arguments["plan_id"] = plans[0]["id"]
 
         # =====================================================
         # Generate therapy plan

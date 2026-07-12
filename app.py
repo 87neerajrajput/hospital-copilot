@@ -36,6 +36,21 @@ st.set_page_config(
     layout="wide"
 )
 
+# Inject custom CSS to reduce padding next to the sidebar
+st.markdown(
+    """
+    <style>
+    /* Reduce padding at the top and sides of the main content area */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # @st.cache_resource
 # def initialize_app():
@@ -523,7 +538,7 @@ if st.session_state.loaded_patient:
 
 
 left_col, right_col = st.columns(
-    [3, 1],
+    [0.6, 0.4],
     gap="small"
 )
 

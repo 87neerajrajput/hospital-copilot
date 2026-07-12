@@ -11,76 +11,82 @@ class ComparisonFormatter:
     @staticmethod
     def format(comparison: dict) -> str:
 
-        report = f"""
-        ============================================================
-        THERAPY PLAN COMPARISON
-        ============================================================
+        report = "#### 🩺 Therapy Plan Comparison\n\n"
 
-        SUMMARY
-        ------------------------------------------------------------
+        # ---------------------------------------------------------
+        # Summary
+        # ---------------------------------------------------------
 
-        {comparison["summary"]}
+        report += "#### 📋 Summary\n\n"
 
+        report += comparison["summary"] + "\n\n"
 
-        TREATMENT EVOLUTION
-        ------------------------------------------------------------
+        # ---------------------------------------------------------
+        # Treatment Evolution
+        # ---------------------------------------------------------
 
-        {comparison["treatment_evolution"]}
+        report += "#### 🔄 Treatment Evolution\n\n"
 
+        report += comparison["treatment_evolution"] + "\n\n"
 
-        GOALS ADDED
-        ------------------------------------------------------------
-        """
+        # ---------------------------------------------------------
+        # Goals Added
+        # ---------------------------------------------------------
+
+        report += "#### ➕ Goals Added\n\n"
 
         if comparison.get("goals_added"):
 
             for goal in comparison["goals_added"]:
 
-                report += f"\n• {goal}"
+                report += f"- {goal}\n"
 
         else:
 
-            report += "\nNone"
+            report += "_None_\n"
 
-        report += """
+        report += "\n"
 
+        # ---------------------------------------------------------
+        # Goals Removed
+        # ---------------------------------------------------------
 
-
-        GOALS REMOVED
-        ------------------------------------------------------------
-        """
+        report += "#### ➖ Goals Removed\n\n"
 
         if comparison.get("goals_removed"):
 
             for goal in comparison["goals_removed"]:
 
-                report += f"\n• {goal}"
+                report += f"- {goal}\n"
 
         else:
 
-            report += "\nNone"
+            report += "_None_\n"
 
-        report += f"""
+        report += "\n"
 
+        # ---------------------------------------------------------
+        # Weekly Schedule Changes
+        # ---------------------------------------------------------
 
+        report += "#### 📅 Weekly Schedule Changes\n\n"
 
-        WEEKLY SCHEDULE CHANGES
-        ------------------------------------------------------------
+        report += comparison["weekly_schedule_changes"] + "\n\n"
 
-        {comparison["weekly_schedule_changes"]}
+        # ---------------------------------------------------------
+        # Home Program Changes
+        # ---------------------------------------------------------
 
+        report += "#### 🏠 Home Program Changes\n\n"
 
-        HOME PROGRAM CHANGES
-        ------------------------------------------------------------
+        report += comparison["home_program_changes"] + "\n\n"
 
-        {comparison["home_program_changes"]}
+        # ---------------------------------------------------------
+        # Clinical Progression
+        # ---------------------------------------------------------
 
+        report += "#### 📈 Clinical Progression\n\n"
 
-        CLINICAL PROGRESSION
-        ------------------------------------------------------------
-
-        {comparison["clinical_progression"]}
-
-        """
+        report += comparison["clinical_progression"]
 
         return report.strip()
