@@ -290,6 +290,30 @@ SKILLS = {
 
             },
 
+
+            "analyze_evolution": {
+
+                "description": (
+                    "Analyze how a patient's therapy has evolved "
+                    "across all therapy plans."
+                ),
+
+                "requires": [
+
+                    "therapy_plan_list",
+
+                ],
+
+                "produces": [
+
+                    "therapy_evolution",
+
+                ],
+
+                "operation": "read",
+
+            },
+
         },
 
     },

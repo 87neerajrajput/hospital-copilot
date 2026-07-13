@@ -30,10 +30,30 @@ class TherapyComparison(BaseModel):
     clinical_progression: str
 
 
+class TherapyEvolution(BaseModel):
+
+    summary: str
+
+    treatment_journey: str
+
+    goal_progression: str
+
+    therapy_focus_shift: str
+
+    caregiver_progression: str
+
+    clinical_reasoning: str
+
+    next_recommendations: str
+
+
 structured_llm = llm.with_structured_output(
     TherapyComparison
 )
 
+structured_evolution_llm = llm.with_structured_output(
+    TherapyEvolution
+)
 
 # ------------------------
 # Helper function
@@ -300,3 +320,48 @@ async def comparison_agent(
     
 
     return comparison.model_dump()
+
+
+
+def analyze_evolution(history):
+
+    prompt = f"""
+    You are an experienced pediatric occupational therapist specializing in
+    longitudinal treatment planning.
+
+    Below is the complete chronological therapy history of one child.
+
+    {history}
+
+    Analyze how therapy evolved across all therapy plans.
+
+    Focus on:
+
+    • Overall treatment journey
+    • Progression of therapy goals
+    • Changes in therapy focus
+    • Evolution of caregiver/home program
+    • Clinical reasoning behind these changes
+    • Recommendations for the next phase of therapy
+
+    Return structured data only.
+    """
+
+    evolution = structured_evolution_llm.invoke(
+        [
+            SystemMessage(
+                content="""
+You are an experienced pediatric occupational therapist.
+
+Your job is to analyze long-term therapy progression across multiple therapy plans.
+
+Focus on longitudinal clinical reasoning rather than comparing only two plans.
+
+Return structured data only.
+"""
+            ),
+            HumanMessage(content=prompt),
+        ]
+    )
+
+    return evolution.model_dump()

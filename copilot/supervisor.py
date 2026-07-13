@@ -199,19 +199,34 @@ def build_supervisor_prompt() -> str:
 
         ------------------------------------------
 
-        7. therapy_generation
+        7. therapy_evolution
 
-        Choose this intent when the therapist wants to create
-        a NEW therapy plan.
+            Use this intent when the therapist wants an overall summary of how a patient's therapy has evolved across multiple therapy plans over time.
 
-        Examples:
-        - Generate a therapy plan.
-        - Create a therapy plan.
-        - Make a therapy plan.
+            Examples:
+            - How has Aston's therapy evolved?
+            - Show therapy evolution.
+            - Summarize therapy progression.
+            - How has treatment changed over time?
+            - How has the patient's therapy progressed?
+
+            Do NOT use this intent when the therapist specifies two particular plans to compare. Those requests should use therapy_comparison.
+
+        ------------------------------------------
+
+        8. therapy_generation
+
+            Choose this intent when the therapist wants to create
+            a NEW therapy plan.
+
+            Examples:
+            - Generate a therapy plan.
+            - Create a therapy plan.
+            - Make a therapy plan.
 
         ------------------------------------
 
-        8. therapy_review
+        9. therapy_review
 
             Choose this intent when the therapist wants a clinical
             evaluation or quality review of an existing therapy plan.
@@ -224,10 +239,10 @@ def build_supervisor_prompt() -> str:
 
         ------------------------------------
 
-        9. qa validates a newly generated therapy plan before
+        10. qa validates a newly generated therapy plan before
         human approval.
 
-        10. report_generation
+        11. report_generation
 
         Choose this intent when the therapist wants to generate
         clinical reports or parent reports from an existing therapy plan.
@@ -238,7 +253,7 @@ def build_supervisor_prompt() -> str:
         - Generate both reports.
 
 
-        11. If the intent is report_generation, determine which report(s) the therapist requested.
+        12. If the intent is report_generation, determine which report(s) the therapist requested.
 
         Report Types:
 

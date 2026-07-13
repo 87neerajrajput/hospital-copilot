@@ -51,9 +51,19 @@ class TherapySkill:
 
             patient_id = arguments["patient_id"]
 
-            plans = await self.mcp.get_patient_plans(
-                patient_id
-            )
+            intent = context.get("intent")
+
+            if intent == "therapy_evolution":
+
+                plans = await self.mcp.get_patient_plans_with_details(
+                    patient_id
+                )
+
+            else:
+
+                plans = await self.mcp.get_patient_plans(
+                    patient_id
+                )
 
             return {
                 "therapy_plan_list": plans

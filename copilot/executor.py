@@ -76,6 +76,8 @@ class Executor:
             plan=plan,
         )
 
+        state.context["intent"] = plan.intent
+
         print("\n========== EXECUTOR ==========\n")
 
         await self._run_steps(

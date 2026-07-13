@@ -52,7 +52,7 @@ questions = [
 
     # "Compare the latest two therapy plans for Aston Martin.",
 
-    "Compare plan 82 with plan 87 for Aston Martin.",
+    # "Compare plan 82 with plan 87 for Aston Martin.",
 
     #"What changed between Aston Martin's latest and previous therapy plans?",
 
@@ -85,6 +85,8 @@ questions = [
     #"What is sensory integration?",
 
     #"Explain dyspraxia.",
+
+    "How has Rehan's therapy evolved?"
 
 ]
 

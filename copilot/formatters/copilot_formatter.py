@@ -1,6 +1,9 @@
 
 from datetime import datetime
 
+from copilot.formatters.timeline_formatter import TimelineFormatter
+
+
 class CopilotFormatter:
 
     @staticmethod
@@ -46,30 +49,7 @@ class CopilotFormatter:
                 "❌ No therapy plans were found for this patient."
             )
 
-        report = "#### 📚 Therapy History\n\n"
-
-        report += (
-            f"**Total Therapy Plans:** {len(plans)}\n\n"
-        )
-
-        report += "**Available Plans**\n\n"
-
-        for plan in plans:
-
-            created = plan["created_at"]
-
-            if isinstance(created, datetime):
-
-                created = created.strftime(
-                    "%d %b %Y, %I:%M %p"
-                )
-
-            report += (
-                f"- **Plan #{plan['id']}**"
-                f" ({created})\n"
-            )
-
-        return report
+        return TimelineFormatter.format(plans)
     
 
 

@@ -104,6 +104,8 @@ class CopilotAssistant:
 
             "therapy_comparison",
 
+            "therapy_evolution",
+
             "report_generation",
 
         }
@@ -140,3 +142,4 @@ class CopilotAssistant:
             patient=patient,
             chat_history=chat_history,
         )
+

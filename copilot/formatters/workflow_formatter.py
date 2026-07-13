@@ -1,6 +1,7 @@
 from copilot.formatters.copilot_formatter import CopilotFormatter
 from copilot.formatters.therapy_plan_formatter import TherapyPlanFormatter
 from copilot.formatters.comparison_formatter import ComparisonFormatter
+from copilot.formatters.evolution_formatter import EvolutionFormatter
 
 
 class WorkflowFormatter:
@@ -78,6 +79,25 @@ class WorkflowFormatter:
                 return "Comparison not available."
 
             return ComparisonFormatter.format(comparison)
+        
+
+        # -----------------------------------------
+        # Therapy Evolution
+        # -----------------------------------------
+
+        elif intent == "therapy_evolution":
+
+            evolution = context.get(
+                "therapy_evolution"
+            )
+
+            if evolution is None:
+
+                return "Therapy evolution not available."
+
+            return EvolutionFormatter.format(
+                evolution
+            )
 
         # -----------------------------------------
         # Therapy Generation

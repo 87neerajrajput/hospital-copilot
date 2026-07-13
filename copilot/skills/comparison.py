@@ -1,5 +1,6 @@
 
-from agents.comparison import comparison_agent
+from agents.comparison import comparison_agent, analyze_evolution
+from langchain_core.messages import HumanMessage
 
 class ComparisonSkill:
 
@@ -13,6 +14,13 @@ class ComparisonSkill:
         if task == "compare_plans":
 
             return await self.compare_plans(
+                arguments,
+                context,
+            )
+        
+        elif task == "analyze_evolution":
+
+            return await self.analyze_evolution(
                 arguments,
                 context,
             )
@@ -63,5 +71,71 @@ class ComparisonSkill:
             "therapy_comparison": comparison,
 
             "comparison_report": formatted_report,
+
+        }
+    
+
+    # ======================================================
+    # ANALYZE EVOLUTION
+    # ======================================================
+
+    async def analyze_evolution(
+        self,
+        arguments: dict,
+        context: dict,
+    ):
+
+        plans = context.get("therapy_plan_list", [])
+
+        if len(plans) < 2:
+
+            return {
+                "therapy_evolution": {
+                    "summary": (
+                        "Only one therapy plan is available. "
+                        "Evolution analysis requires multiple plans."
+                    )
+                }
+            }
+
+        # Keep chronological order
+
+        plans = sorted(
+            plans,
+            key=lambda p: p["created_at"],
+        )
+
+        history = []
+
+        for plan in plans:
+
+            therapy = plan["therapy_plan"]
+
+            history.append(
+
+                {
+                    "plan_id": plan["id"],
+                    "created_at": str(plan["created_at"]),
+                    "therapy_goals": therapy.get(
+                        "therapy_goals",
+                        [],
+                    ),
+                    "weekly_schedule": therapy.get(
+                        "weekly_schedule",
+                        [],
+                    ),
+                    "home_program": therapy.get(
+                        "home_program",
+                        [],
+                    ),
+                }
+
+            )
+
+        evolution = analyze_evolution(history)
+
+        return {
+
+            "therapy_evolution": evolution
 
         }

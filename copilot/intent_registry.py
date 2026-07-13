@@ -160,6 +160,28 @@ INTENTS = {
         ],
     },
 
+
+    "therapy_evolution": {
+
+        "description": (
+            "Summarize how a patient's therapy has evolved "
+            "across multiple therapy plans over time."
+        ),
+
+        "artifact": "therapy_evolution",
+
+        "operation": "read",
+
+        "allowed_skills": [
+
+            "patient",
+            "therapy",
+            "comparison",
+
+        ],
+    },
+
+
     # =====================================================
     # QA
     # =====================================================

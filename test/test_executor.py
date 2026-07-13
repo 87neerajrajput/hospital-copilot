@@ -11,7 +11,7 @@ TEST_REQUESTS = [
 
     # "Show Aston Martin's latest therapy plan.",
 
-    "Show Aston Martin's therapy history.",
+    #"Show Aston Martin's therapy history.",
 
     #"Show Aston Martin's latest therapy plan.",
 
@@ -28,6 +28,8 @@ TEST_REQUESTS = [
     # "Review Aston Martin's therapy plan.",
 
     # "Generate report for Aston Martin.",
+
+    "How has Rehan's therapy evolved?"
  
 ]
 

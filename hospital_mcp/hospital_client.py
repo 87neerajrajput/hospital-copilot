@@ -152,6 +152,42 @@ class HospitalMCPClient:
     
 
     # ==========================================================
+    # GET THERAPY PLAN WITH THERPAY DETAILS
+    # ==========================================================
+
+    async def get_patient_plans_with_details(
+        self,
+        patient_id: int,
+    ):
+
+        patient_plans = await self.get_patient_plans(
+            patient_id
+        )
+
+        detailed_plans = []
+
+        for plan in patient_plans:
+
+            therapy_plan = await self.get_therapy_plan(
+                plan["id"]
+            )
+
+            if therapy_plan:
+
+                detailed_plans.append({
+
+                    "id": plan["id"],
+
+                    "created_at": plan["created_at"],
+
+                    "therapy_plan": therapy_plan["therapy_plan"],
+
+                })
+
+        return detailed_plans
+
+
+    # ==========================================================
     # GET THERAPY PLAN
     # ==========================================================
 
