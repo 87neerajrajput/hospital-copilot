@@ -291,10 +291,10 @@ We'll build it in four stages:
 
 Milestone 11
 │
-├── 11.1 Therapy Timeline
+├── 11.1 Therapy Timeline           ✅
 │
-├── 11.2 Therapy Evolution
+├── 11.2 Therapy Evolution          ✅
 │
-├── 11.3 Clinical Trend Analysis
+├── 11.3 Clinical Trend Analysis    ✅
 │
-└── 11.4 Clinical Memory
+└── 11.4 Clinical Memory            ✅

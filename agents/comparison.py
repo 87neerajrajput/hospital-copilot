@@ -47,12 +47,35 @@ class TherapyEvolution(BaseModel):
     next_recommendations: str
 
 
+class TherapyTrend(BaseModel):
+
+    overall_status: str
+
+    summary: str
+
+    improving_domains: list[str]
+
+    plateaued_domains: list[str]
+
+    regression_risk: list[str]
+
+    clinical_observations: str
+
+    recommended_priorities: list[str]
+
+    prognosis: str
+
+
 structured_llm = llm.with_structured_output(
     TherapyComparison
 )
 
 structured_evolution_llm = llm.with_structured_output(
     TherapyEvolution
+)
+
+trend_llm = llm.with_structured_output(
+    TherapyTrend
 )
 
 # ------------------------
@@ -365,3 +388,74 @@ Return structured data only.
     )
 
     return evolution.model_dump()
+
+
+# ======================================================
+# ANALYZE TREND
+# ======================================================
+
+async def analyze_trend(
+    history: list,
+):
+
+    prompt = f"""
+You are an expert Pediatric Occupational Therapist performing a longitudinal clinical trend analysis.
+
+Below is the complete chronological therapy history of one child.
+
+{history}
+
+Analyze the patient's overall clinical trajectory.
+
+Focus on:
+
+- overall clinical status
+- areas showing improvement
+- areas showing little or no improvement
+- possible regression risks
+- important clinical observations
+- recommended therapy priorities
+- expected prognosis
+
+Base your reasoning ONLY on the therapy history provided.
+
+Do not invent progress.
+
+If insufficient evidence exists, explicitly state that.
+
+Return structured data only.
+"""
+
+    trend = await trend_llm.ainvoke(
+
+        [
+
+            SystemMessage(
+
+                content="""
+You are a senior pediatric occupational therapist.
+
+You specialize in identifying longitudinal rehabilitation trends.
+
+Your analysis must be objective, evidence-based, and clinically realistic.
+
+Never exaggerate improvement.
+
+Never invent regression.
+
+Use only the supplied therapy history.
+
+Return structured output only.
+"""
+
+            ),
+
+            HumanMessage(
+                content=prompt
+            )
+
+        ]
+
+    )
+
+    return trend.model_dump()

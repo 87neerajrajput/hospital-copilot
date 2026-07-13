@@ -182,6 +182,27 @@ INTENTS = {
     },
 
 
+    "therapy_trend": {
+
+        "description": (
+            "Analyze long-term clinical progress across therapy plans "
+            "to determine improvement, plateau, regression, and future priorities."
+        ),
+
+        "artifact": "therapy_trend",
+
+        "operation": "read",
+
+        "allowed_skills": [
+
+            "patient",
+            "therapy",
+            "comparison",
+
+        ],
+    },
+
+
     # =====================================================
     # QA
     # =====================================================

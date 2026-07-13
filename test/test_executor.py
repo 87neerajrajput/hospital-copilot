@@ -29,7 +29,9 @@ TEST_REQUESTS = [
 
     # "Generate report for Aston Martin.",
 
-    "How has Rehan's therapy evolved?"
+    #"How has Rehan's therapy evolved?"
+
+    "Has Rehan regressed?"
  
 ]
 

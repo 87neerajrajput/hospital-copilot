@@ -53,7 +53,10 @@ class TherapySkill:
 
             intent = context.get("intent")
 
-            if intent == "therapy_evolution":
+            if intent in {
+                "therapy_evolution",
+                "therapy_trend",
+            }:
 
                 plans = await self.mcp.get_patient_plans_with_details(
                     patient_id

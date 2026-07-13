@@ -2,6 +2,7 @@ from copilot.formatters.copilot_formatter import CopilotFormatter
 from copilot.formatters.therapy_plan_formatter import TherapyPlanFormatter
 from copilot.formatters.comparison_formatter import ComparisonFormatter
 from copilot.formatters.evolution_formatter import EvolutionFormatter
+from copilot.formatters.trend_formatter import TrendFormatter
 
 
 class WorkflowFormatter:
@@ -97,6 +98,25 @@ class WorkflowFormatter:
 
             return EvolutionFormatter.format(
                 evolution
+            )
+        
+
+        # -----------------------------------------
+        # Therapy Trend
+        # -----------------------------------------
+
+        elif intent == "therapy_trend":
+
+            trend = context.get(
+                "therapy_trend"
+            )
+
+            if trend is None:
+
+                return "Trend analysis not available."
+
+            return TrendFormatter.format(
+                trend
             )
 
         # -----------------------------------------

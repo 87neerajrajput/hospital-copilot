@@ -106,6 +106,8 @@ class CopilotAssistant:
 
             "therapy_evolution",
 
+            "therapy_trend",
+
             "report_generation",
 
         }

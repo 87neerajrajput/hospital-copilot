@@ -1,5 +1,5 @@
 
-from agents.comparison import comparison_agent, analyze_evolution
+from agents.comparison import comparison_agent, analyze_evolution, analyze_trend
 from langchain_core.messages import HumanMessage
 
 class ComparisonSkill:
@@ -21,6 +21,13 @@ class ComparisonSkill:
         elif task == "analyze_evolution":
 
             return await self.analyze_evolution(
+                arguments,
+                context,
+            )
+        
+        elif task == "analyze_trend":
+
+            return await self.analyze_trend(
                 arguments,
                 context,
             )
@@ -137,5 +144,102 @@ class ComparisonSkill:
         return {
 
             "therapy_evolution": evolution
+
+        }
+    
+
+    # ======================================================
+    # ANALYZE TREND
+    # ======================================================
+
+    async def analyze_trend(
+        self,
+        arguments: dict,
+        context: dict,
+    ):
+
+        plans = context.get(
+            "therapy_plan_list",
+            [],
+        )
+
+        if len(plans) < 2:
+
+            return {
+
+                "therapy_trend": {
+
+                    "overall_status": "Insufficient Data",
+
+                    "summary": (
+                        "At least two therapy plans are required "
+                        "for trend analysis."
+                    ),
+
+                    "improving_domains": [],
+
+                    "plateaued_domains": [],
+
+                    "regression_risk": [],
+
+                    "clinical_observations": "",
+
+                    "recommended_priorities": [],
+
+                    "prognosis": "",
+
+                }
+
+            }
+
+        # -------------------------------------------------
+        # Build chronological history
+        # -------------------------------------------------
+
+        history = sorted(
+            plans,
+            key=lambda p: p["created_at"],
+        )
+
+        compact_history = []
+
+        for plan in history:
+
+            therapy = plan["therapy_plan"]
+
+            compact_history.append({
+
+                "plan_id": plan["id"],
+
+                "created_at": str(plan["created_at"]),
+
+                "therapy_goals": therapy.get(
+                    "therapy_goals",
+                    [],
+                ),
+
+                "weekly_schedule": therapy.get(
+                    "weekly_schedule",
+                    [],
+                ),
+
+                "home_program": therapy.get(
+                    "home_program",
+                    [],
+                ),
+
+            })
+
+        # -------------------------------------------------
+        # Ask LLM
+        # -------------------------------------------------
+
+        trend = await analyze_trend(
+            compact_history
+        )
+
+        return {
+
+            "therapy_trend": trend
 
         }

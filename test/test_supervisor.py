@@ -86,7 +86,15 @@ questions = [
 
     #"Explain dyspraxia.",
 
-    "How has Rehan's therapy evolved?"
+    # "How has Rehan's therapy evolved?"
+
+    #"Is Rehan making progress?",
+
+    #"Has Rehan plateaued?"
+
+    #"Is therapy working for Rehan?"
+
+    "Has Rehan regressed?"
 
 ]
 

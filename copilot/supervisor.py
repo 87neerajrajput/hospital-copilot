@@ -214,7 +214,24 @@ def build_supervisor_prompt() -> str:
 
         ------------------------------------------
 
-        8. therapy_generation
+        8. therapy_trend
+
+            Use this intent when the therapist wants to understand
+            overall clinical progress rather than simply describing
+            how therapy evolved.
+
+            Examples:
+
+            • Is Rehan improving?
+            • Has therapy plateaued?
+            • Is there regression?
+            • Which therapy domains improved the most?
+            • What should be prioritized next?
+            • How is the patient's overall progress?
+
+        ------------------------------------------
+
+        9. therapy_generation
 
             Choose this intent when the therapist wants to create
             a NEW therapy plan.
@@ -226,7 +243,7 @@ def build_supervisor_prompt() -> str:
 
         ------------------------------------
 
-        9. therapy_review
+        10. therapy_review
 
             Choose this intent when the therapist wants a clinical
             evaluation or quality review of an existing therapy plan.
@@ -239,10 +256,10 @@ def build_supervisor_prompt() -> str:
 
         ------------------------------------
 
-        10. qa validates a newly generated therapy plan before
+        11. qa validates a newly generated therapy plan before
         human approval.
 
-        11. report_generation
+        12. report_generation
 
         Choose this intent when the therapist wants to generate
         clinical reports or parent reports from an existing therapy plan.
@@ -253,7 +270,7 @@ def build_supervisor_prompt() -> str:
         - Generate both reports.
 
 
-        12. If the intent is report_generation, determine which report(s) the therapist requested.
+        13. If the intent is report_generation, determine which report(s) the therapist requested.
 
         Report Types:
 

@@ -314,6 +314,30 @@ SKILLS = {
 
             },
 
+
+            "analyze_trend": {
+
+                "description": (
+                    "Analyze longitudinal clinical trends across all "
+                    "therapy plans."
+                ),
+
+                "requires": [
+
+                    "therapy_plan_list",
+
+                ],
+
+                "produces": [
+
+                    "therapy_trend",
+
+                ],
+
+                "operation": "read",
+
+            },
+
         },
 
     },
