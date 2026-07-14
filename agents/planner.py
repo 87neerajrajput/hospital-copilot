@@ -56,6 +56,7 @@ async def planning_agent(state: HealthcareState, auto_save: bool = True):
     retrieved_docs = state["retrieved_docs"]
     knowledge_context = "\n\n".join(retrieved_docs)
     assessment_summary = state.get("assessment_summary")
+    clinical_memory = state.get("clinical_memory", {},)
 
     # -----------------------------------------
     # Assessment Context
@@ -107,119 +108,161 @@ async def planning_agent(state: HealthcareState, auto_save: bool = True):
     Always integrate:
 
     1. Patient demographics
-
     2. Assessment findings
-
-    3. Clinical observations
-
+    3. Clinical memory
     4. Retrieved clinical knowledge
 
-    Your therapy plans should be individualized rather than diagnosis-based.
+    Your therapy plans should always be individualized rather than diagnosis-based.
 
-    Every recommendation must be clinically justified by the available assessment findings whenever possible.
+    Every recommendation must be clinically justified using the available assessment findings and evidence from the knowledge base whenever possible.
 
+    ==================================================================
     PATIENT INFORMATION
-    ===================
+    ==================================================================
+
     {patient_info}
 
+    ==================================================================
     ASSESSMENT FINDINGS
-    ===================
+    ==================================================================
+
     {assessment_context}
 
+    ==================================================================
+    CLINICAL MEMORY
+    ==================================================================
+
+    {clinical_memory}
+
+    Clinical Memory may contain one or more previous approved therapy plans.
+
+    When previous therapy plans are available:
+
+    - Review previous therapy goals before creating new ones.
+    - Continue goals that remain clinically relevant.
+    - Progress goals instead of restarting them whenever appropriate.
+    - Avoid repeating identical weekly schedules.
+    - Avoid repeating identical home program activities unless continued practice is clinically justified.
+    - Build naturally on previous interventions.
+    - If introducing new goals or interventions, ensure they are supported by current assessment findings.
+    - If regression or plateau is evident, modify the treatment approach accordingly.
+    - Maintain continuity of care across therapy sessions.
+
+    If no previous therapy plan exists, generate a completely new therapy plan.
+
+    ==================================================================
     KNOWLEDGE BASE CONTEXT
-    ======================
+    ==================================================================
+
     {knowledge_context}
 
-    Create a clinically appropriate and individualized therapy plan.
+    Create a clinically appropriate, evidence-based and individualized therapy plan.
 
     Requirements:
 
-    1. Use BOTH the patient information and assessment findings.
+    1. Use BOTH patient information and assessment findings.
 
-    2. Prioritize functional limitations identified in the assessment.
+    2. Use Clinical Memory to maintain continuity of care.
 
-    3. If sensory processing findings exist,
+    3. Prioritize functional limitations identified in the assessment.
+
+    4. If sensory processing findings exist,
     integrate sensory-based interventions.
 
-    4. If communication deficits exist,
+    5. If communication deficits exist,
     include communication-supportive activities.
 
-    5. If ADL limitations exist,
+    6. If ADL limitations exist,
     include functional independence goals.
 
-    6. If behavioural observations exist,
+    7. If behavioural observations exist,
     include regulation and behaviour management strategies.
 
-    7. Address ALL identified concerns.
+    8. Address ALL identified concerns.
 
-    8. Use recommendations supported by the retrieved clinical knowledge.
+    9. Use recommendations supported by the retrieved clinical knowledge.
 
-    9. Create specific, measurable, age-appropriate SMART goals.
+    10. Create specific, measurable, age-appropriate SMART goals.
 
-    10. Ensure weekly activities progressively build toward long-term goals.
+    11. Ensure weekly activities progressively build toward long-term goals.
 
-    11. Ensure every home program activity directly reinforces the weekly intervention.
-    
+    12. Ensure home program activities directly reinforce the weekly intervention.
+
+    13. Avoid unnecessary duplication of previous therapy plans.
+
+    14. The new therapy plan should represent the patient's current stage of therapy, not restart treatment from the beginning.
+
     Generate:
 
     -----------------------------------------
     THERAPY GOALS
     -----------------------------------------
-    3-5 SMART goals.
 
-    Each goal should:
-    - Be specific
-    - Be measurable
-    - Be achievable
-    - Be clinically meaningful
+    Provide 3-5 SMART goals.
+
+    Each goal must be:
+
+    - Specific
+    - Measurable
+    - Achievable
+    - Relevant
+    - Time-bound
 
     -----------------------------------------
     WEEKLY THERAPY SCHEDULE
     -----------------------------------------
-    Provide 4 weeks.
+
+    Provide a progressive 4-week schedule.
 
     For each week include:
+
     - Week
     - Focus Area
     - Activities
     - Expected Outcome
 
-    Expected outcomes should clearly contribute toward therapy goals.
+    Each week's activities should naturally progress from the previous week.
 
     -----------------------------------------
-    HOME PROGRAM SUGGESTIONS
+    HOME PROGRAM
     -----------------------------------------
-    Provide 5-10 home activities.
+
+    Provide 5-10 caregiver-friendly activities.
 
     For each activity include:
+
     - Activity Name
     - Instructions
     - Recommended Frequency
 
-    Instructions should be practical and easy for caregivers to follow.
+    Home activities should reinforce the therapy goals and weekly intervention plan.
 
-    Ensure the therapy goals, weekly schedule, and home program are fully aligned.
+    Ensure the Therapy Goals, Weekly Schedule and Home Program are internally consistent and clinically aligned.
     """
 
     # 5. Invoke the structured model
     # The output is NOT a string or markdown text. It is a Python Pydantic Object.
     profile = structured_llm.invoke([
         SystemMessage(content="""
-        You are a senior pediatric occupational therapist.
+        You are a senior pediatric occupational therapist responsible for creating high-quality longitudinal therapy plans.
 
-        Create high-quality therapy plans that will undergo clinical quality assurance review.
+        Your therapy plans will undergo clinical quality assurance review.
 
         Requirements:
 
         - Address every identified concern.
-        - Create specific and measurable therapy goals.
-        - Generate a complete 4-week therapy schedule.
+        - Create specific and measurable SMART therapy goals.
+        - Generate a clinically progressive 4-week therapy schedule.
         - Ensure weekly activities support therapy goals.
         - Ensure home program activities reinforce therapy goals.
-        - Use recommendations supported by retrieved knowledge.
-        - Ensure recommendations are safe, practical, and age appropriate.
+        - Use recommendations supported by retrieved clinical knowledge.
+        - Ensure recommendations are safe, practical and age appropriate.
+        - Maintain continuity with previous approved therapy plans whenever Clinical Memory is available.
+        - Progress treatment appropriately rather than restarting therapy.
+        - Avoid unnecessary duplication of goals, schedules or home programs from previous plans.
+        - Every recommendation should be clinically defensible.
 
-        Your output should be internally consistent and clinically defensible.
+        Your output must be internally consistent, evidence-based and suitable for documentation in a pediatric rehabilitation setting.
         """),
         HumanMessage(content=PROMPT)
     ])

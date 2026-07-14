@@ -12,6 +12,8 @@ class HealthcareState(TypedDict):
 
     patient_id: int | None
 
+    clinical_memory: dict | None
+
     therapy_plan: dict | None
 
     plan_id: int | None

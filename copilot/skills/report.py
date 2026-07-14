@@ -110,6 +110,8 @@ class ReportSkill:
 
             patient_id=patient["id"],
 
+            clinical_memory=None,
+
             therapy_plan=therapy_plan,
 
             plan_id=context.get("plan_id"),

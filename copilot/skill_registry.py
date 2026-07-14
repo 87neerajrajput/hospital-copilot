@@ -149,7 +149,8 @@ SKILLS = {
 
                 "requires": [
                     "patient",
-                    "knowledge"
+                    "knowledge",
+                    "clinical_memory",
                 ],
 
                 "produces": [
@@ -176,6 +177,29 @@ SKILLS = {
 
                 "produces": [
                     "therapy_plan_list"
+                ],
+
+                "requires_approval": False,
+
+            },
+
+
+            "build_clinical_memory": {
+
+                "purpose":
+                    "Build longitudinal clinical memory for therapy generation.",
+
+                "operation": "read",
+
+                "description":
+                    "Collect previous clinical information that should influence a new therapy plan.",
+
+                "requires": [
+                    "therapy_plan_list",
+                ],
+
+                "produces": [
+                    "clinical_memory",
                 ],
 
                 "requires_approval": False,

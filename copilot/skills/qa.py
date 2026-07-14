@@ -62,6 +62,11 @@ class QASkill:
             []
         )
 
+        clinical_memory = context.get(
+            "clinical_memory",
+            {},
+        )
+
         state = HealthcareState(
 
             patient_form=None,
@@ -73,6 +78,8 @@ class QASkill:
             patient_info=patient,
 
             patient_id=patient["id"],
+
+            clinical_memory=clinical_memory,
 
             therapy_plan=therapy_plan,
 

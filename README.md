@@ -298,3 +298,32 @@ Milestone 11
 ├── 11.3 Clinical Trend Analysis    ✅
 │
 └── 11.4 Clinical Memory            ✅
+
+
+Milestone 12
+Goal Tracking & Outcome Intelligence
+        ↓
+Milestone 13
+Clinical Analytics Dashboard
+        ↓
+Milestone 14
+Population Analytics
+
+
+
+Milestone 12 : Goal Tracking & Outcome Intelligence
+│
+├── 12.1 Goal Achievement Tracking
+│      ("Goal 1 achieved 80%")
+│
+├── 12.2 Outcome Measurement
+│      (clinical scores over time)
+│
+├── 12.3 Parent Feedback Memory
+│
+├── 12.4 Therapist Session Notes
+│
+├── 12.5 Adaptive Planning
+│      (planner changes treatment based on outcomes)
+│
+└── 12.6 Explain Clinical Reasoning

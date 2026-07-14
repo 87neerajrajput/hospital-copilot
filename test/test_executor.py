@@ -31,7 +31,9 @@ TEST_REQUESTS = [
 
     #"How has Rehan's therapy evolved?"
 
-    "Has Rehan regressed?"
+    #"Has Rehan regressed?"
+
+    "Generate a therapy plan for Rehan."
  
 ]
 

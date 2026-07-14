@@ -94,7 +94,8 @@ questions = [
 
     #"Is therapy working for Rehan?"
 
-    "Has Rehan regressed?"
+    #"Has Rehan regressed?"
+    "Generate a therapy plan for Rehan."
 
 ]
 

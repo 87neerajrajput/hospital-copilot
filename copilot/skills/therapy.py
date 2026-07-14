@@ -71,6 +71,14 @@ class TherapySkill:
             return {
                 "therapy_plan_list": plans
             }
+        
+        
+        elif task == "build_clinical_memory":
+
+            return await self.build_clinical_memory(
+                arguments,
+                context,
+            )
 
         elif task == "load_latest_plan":
 
@@ -125,6 +133,11 @@ class TherapySkill:
             []
         )
 
+        clinical_memory = context.get(
+            "clinical_memory",
+            {},
+        )
+
         state = HealthcareState(
 
             patient_form=None,
@@ -136,6 +149,8 @@ class TherapySkill:
             patient_info=patient,
 
             patient_id=patient["id"],
+
+            clinical_memory=clinical_memory,
 
             therapy_plan=None,
 
@@ -261,6 +276,40 @@ class TherapySkill:
 
         return {
             "selected_plans": selected
+        }
+    
+
+    # ======================================================
+    # BUILD CLINICAL MEMORY
+    # ======================================================
+
+    async def build_clinical_memory(
+        self,
+        arguments: dict,
+        context: dict,
+    ):
+
+        plans = context.get(
+            "therapy_plan_list",
+            [],
+        )
+
+        latest_plan = None
+
+        if plans:
+
+            latest_plan = await self.mcp.get_therapy_plan(
+                plans[0]["id"]
+            )
+
+        return {
+
+            "clinical_memory": {
+
+                "latest_therapy_plan": latest_plan
+
+            }
+
         }
 
 
