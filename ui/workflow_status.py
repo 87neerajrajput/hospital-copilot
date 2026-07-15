@@ -1,5 +1,7 @@
 import streamlit as st
 
+from datetime import timedelta
+
 from copilot.workflow_events import workflow_events
 
 
@@ -9,9 +11,6 @@ class WorkflowStatus:
     def render(
         workflow_id: str,
     ):
-        
-        print("UI EventBus:", id(workflow_events))
-        print(workflow_events.active_workflows())
 
         events = workflow_events.get_history(
             workflow_id
@@ -22,21 +21,27 @@ class WorkflowStatus:
 
         latest = events[-1]
 
-        WorkflowStatus._render_progress(
-            latest
+        WorkflowStatus._render_header(
+            latest,
+            events,
         )
 
         WorkflowStatus._render_timeline(
             events
         )
 
+        WorkflowStatus._render_footer(
+            events
+        )
+
     # --------------------------------------------------
-    # Progress
+    # Header
     # --------------------------------------------------
 
     @staticmethod
-    def _render_progress(
+    def _render_header(
         latest,
+        events,
     ):
 
         progress = (
@@ -45,13 +50,27 @@ class WorkflowStatus:
             else 0
         )
 
-        st.progress(progress)
+        status = latest.status.lower()
 
-        st.caption(
+        if status == "running":
 
-            f"Step {latest.step} of {latest.total_steps}"
+            st.progress(progress)
 
-        )
+            st.caption(
+                f"Executing step {latest.step} of {latest.total_steps}"
+            )
+
+        elif status == "waiting":
+
+            st.warning("Waiting for therapist approval")
+
+        elif status == "failed":
+
+            st.error("Workflow failed")
+
+        else:
+
+            st.success("Workflow completed")
 
     # --------------------------------------------------
     # Timeline
@@ -62,25 +81,145 @@ class WorkflowStatus:
         events,
     ):
 
-        with st.container(
-            border=True,
-        ):
+        st.markdown("#### 🧠 AI Execution")
 
-            st.markdown(
-                "###### 🏥 Workflow Execution"
+        for event in events:
+
+            badge = WorkflowStatus._badge(
+                event.status
             )
 
-            for event in events:
+            ts = event.timestamp.strftime("%H:%M:%S")
 
-                icon = WorkflowStatus._icon(
-                    event.status
-                )
+            st.markdown(
+                f"""
+    <div style="
+    padding:12px 14px;
+    margin-bottom:10px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.02);
+    ">
 
-                st.markdown(
+    <div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    ">
 
-                    f"{icon} {event.message}"
+    <div style="display:flex;align-items:center;gap:10px;">
 
-                )
+    {badge}
+
+    <span style="
+    font-weight:600;
+    font-size:15px;
+    ">
+    {event.message}
+    </span>
+
+    </div>
+
+    <div style="
+    font-size:12px;
+    opacity:.55;
+    ">
+    {ts}
+    </div>
+
+    </div>
+
+    </div>
+    """,
+                unsafe_allow_html=True,
+            )
+
+
+    @staticmethod
+    def _badge(
+        status: str,
+    ):
+
+        styles = {
+
+            "running": (
+                "#2563eb",
+                "Running",
+            ),
+
+            "completed": (
+                "#16a34a",
+                "Done",
+            ),
+
+            "waiting": (
+                "#d97706",
+                "Waiting",
+            ),
+
+            "failed": (
+                "#dc2626",
+                "Failed",
+            ),
+
+        }
+
+        color, text = styles.get(
+
+            status.lower(),
+
+            ("#6b7280", "Info"),
+
+        )
+
+        return f"""
+    <span style="
+    background:{color};
+    color:white;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:600;
+    min-width:70px;
+    display:inline-block;
+    text-align:center;
+    ">
+    {text}
+    </span>
+    """
+
+    # --------------------------------------------------
+    # Footer
+    # --------------------------------------------------
+
+    @staticmethod
+    def _render_footer(
+        events,
+    ):
+
+        if len(events) < 2:
+            return
+
+        duration = (
+            events[-1].timestamp
+            - events[0].timestamp
+        )
+
+        st.markdown("---")
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+
+            st.caption(
+                f"⏱ Duration: {WorkflowStatus._format_duration(duration)}"
+            )
+
+        with c2:
+
+            st.caption(
+                f"📋 {len(events)} events"
+            )
 
     # --------------------------------------------------
     # Icons
@@ -91,7 +230,7 @@ class WorkflowStatus:
         status: str,
     ):
 
-        mapping = {
+        return {
 
             "running": "🔄",
 
@@ -101,9 +240,21 @@ class WorkflowStatus:
 
             "failed": "❌",
 
-        }
+        }.get(status, "•")
 
-        return mapping.get(
-            status,
-            "•",
-        )
+    # --------------------------------------------------
+    # Duration
+    # --------------------------------------------------
+
+    @staticmethod
+    def _format_duration(
+        duration: timedelta,
+    ):
+
+        ms = duration.total_seconds()
+
+        if ms < 1:
+
+            return f"{int(ms*1000)} ms"
+
+        return f"{ms:.2f} sec"
