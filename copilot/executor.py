@@ -34,10 +34,156 @@ from copilot.approval import (
     ApprovalService,
     ApprovalStatus,
 )
+from copilot.workflow_events import workflow_events
 from graph import state
+import uuid
 
 
 class Executor:
+
+    WORKFLOW_MESSAGES = {
+
+        # --------------------------------------------------
+        # Patient
+        # --------------------------------------------------
+
+        ("patient", "find_patient"): {
+
+            "running": "Finding patient...",
+
+            "completed": "Patient found",
+
+        },
+
+        # --------------------------------------------------
+        # Knowledge
+        # --------------------------------------------------
+
+        ("knowledge", "search_information"): {
+
+            "running": "Searching clinical knowledge...",
+
+            "completed": "Clinical knowledge retrieved",
+
+        },
+
+        # --------------------------------------------------
+        # Therapy
+        # --------------------------------------------------
+
+        ("therapy", "load_patient_plans"): {
+
+            "running": "Loading previous therapy plans...",
+
+            "completed": "Previous therapy plans loaded",
+
+        },
+
+        ("therapy", "build_clinical_memory"): {
+
+            "running": "Building clinical memory...",
+
+            "completed": "Clinical memory built",
+
+        },
+
+        ("therapy", "generate_therapy_plan"): {
+
+            "running": "Generating therapy plan...",
+
+            "completed": "Therapy plan generated",
+
+        },
+
+        ("therapy", "load_latest_plan"): {
+
+            "running": "Loading latest therapy plan...",
+
+            "completed": "Latest therapy plan loaded",
+
+        },
+
+        ("therapy", "load_selected_plans"): {
+
+            "running": "Loading selected therapy plans...",
+
+            "completed": "Selected therapy plans loaded",
+
+        },
+
+        ("therapy", "save_plan"): {
+
+            "running": "Saving therapy plan...",
+
+            "completed": "Therapy plan saved",
+
+        },
+
+        # --------------------------------------------------
+        # Comparison
+        # --------------------------------------------------
+
+        ("comparison", "compare_plans"): {
+
+            "running": "Comparing therapy plans...",
+
+            "completed": "Therapy comparison completed",
+
+        },
+
+        ("comparison", "analyze_evolution"): {
+
+            "running": "Analyzing therapy evolution...",
+
+            "completed": "Therapy evolution analyzed",
+
+        },
+
+        ("comparison", "analyze_trend"): {
+
+            "running": "Analyzing clinical trends...",
+
+            "completed": "Clinical trend analysis completed",
+
+        },
+
+        # --------------------------------------------------
+        # QA
+        # --------------------------------------------------
+
+        ("qa", "validate_therapy_plan"): {
+
+            "running": "Performing clinical quality checks...",
+
+            "completed": "Clinical quality checks passed",
+
+        },
+
+        # --------------------------------------------------
+        # Approval
+        # --------------------------------------------------
+
+        ("approval", "review_plan"): {
+
+            "running": "Waiting for therapist approval...",
+
+            "completed": "Therapy plan approved",
+
+        },
+
+        # --------------------------------------------------
+        # Reports
+        # --------------------------------------------------
+
+        ("report", "generate_reports"): {
+
+            "running": "Generating reports...",
+
+            "completed": "Reports generated",
+
+        },
+
+    }
 
     def __init__(self):
 
@@ -70,10 +216,36 @@ class Executor:
     async def execute(
         self,
         plan: ExecutionPlan,
+        workflow_id: str | None = None,
     ):
+
+        if workflow_id is None:
+
+            workflow_id = str(uuid.uuid4())
 
         state = ExecutionState(
             plan=plan,
+            workflow_id=workflow_id,
+        )
+
+        print("Executor EventBus:", id(workflow_events))
+
+        workflow_events.publish(
+
+            workflow_id=state.workflow_id,
+
+            step=0,
+
+            total_steps=len(plan.steps),
+
+            skill="system",
+
+            task="workflow",
+
+            status="running",
+
+            message="Workflow started",
+
         )
 
         state.context["intent"] = plan.intent
@@ -85,6 +257,22 @@ class Executor:
             state,
 
         )
+
+        # -----------------------------------------
+        # Debug Workflow Events
+        # -----------------------------------------
+
+        print("\n========== WORKFLOW EVENTS ==========\n")
+
+        for event in workflow_events.get_history(state.workflow_id):
+
+            print(
+                f"[{event.status.upper()}] "
+                f"Step {event.step}/{event.total_steps} "
+                f"- {event.message}"
+            )
+
+        print("\n====================================\n")
 
         if state.status == ApprovalStatus.WAITING:
             return state
@@ -151,6 +339,28 @@ class Executor:
                 return
 
             print(f"Resolved Args : {resolved_arguments}")
+
+            # ------------------------------------------------------
+            # Publish workflow started event
+            # ------------------------------------------------------
+
+            workflow_events.publish(
+
+                workflow_id=state.workflow_id,
+
+                step=index + 1,
+
+                total_steps=len(state.plan.steps),
+
+                skill=step.skill,
+
+                task=step.task,
+
+                status="running",
+
+                message=self._workflow_message(step, "running",),
+
+            )
 
             # ---------------------------------------------
             # Human Approval
@@ -228,9 +438,28 @@ class Executor:
 
             )
 
+
             state.current_step = index + 1
 
         state.status = "COMPLETED"
+
+        workflow_events.publish(
+
+                workflow_id=state.workflow_id,
+
+                step=index + 1,
+
+                total_steps=len(state.plan.steps),
+
+                skill=step.skill,
+
+                task=step.task,
+
+                status="completed",
+
+                message=self._workflow_message(step, "completed",),
+
+            )
 
 
         if state.current_step == len(state.plan.steps):
@@ -405,3 +634,32 @@ class Executor:
         await self._run_steps(state)
 
         return state
+    
+
+    def _workflow_message(
+        self,
+        step,
+        status: str,
+    ):
+
+        messages = self.WORKFLOW_MESSAGES.get(
+
+            (step.skill, step.task)
+
+        )
+
+        if messages:
+
+            return messages.get(
+
+                status,
+
+                f"{step.task} {status}",
+
+            )
+
+        if status == "running":
+
+            return f"Running {step.skill}.{step.task}..."
+
+        return f"{step.task} completed"

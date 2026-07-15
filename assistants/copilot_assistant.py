@@ -1,5 +1,6 @@
 from assistants.chat_assistant import ask_ai
 import streamlit as st
+import uuid
 from copilot.formatters.therapy_plan_formatter import TherapyPlanFormatter
 from copilot.supervisor import ClinicalSupervisor
 from copilot.executor import Executor
@@ -14,6 +15,16 @@ class CopilotAssistant:
         self.supervisor = ClinicalSupervisor()
 
         self.executor = Executor()
+
+    
+    def _set_workflow_id(self,workflow_id: str,):
+
+        st.session_state.workflow_id = workflow_id
+
+
+    def _get_workflow_id(self,):
+
+        return st.session_state.get("workflow_id")
 
 
     def _get_execution_state(self):
@@ -53,9 +64,12 @@ class CopilotAssistant:
 
             )
 
+            self._set_workflow_id(state.workflow_id)
+
             if state.status == "REJECTED":
 
                 self._set_execution_state(None)
+                self._set_workflow_id(None)
 
                 return CopilotFormatter.therapy_rejected()
             
@@ -69,6 +83,7 @@ class CopilotAssistant:
                 )
 
             self._set_execution_state(None)
+            self._set_workflow_id(None)
 
             return WorkflowFormatter.format(
                 state.plan.intent,
@@ -116,6 +131,8 @@ class CopilotAssistant:
 
             execution_state = await self.executor.execute(plan)
 
+            self._set_workflow_id(execution_state.workflow_id)
+
             if execution_state.waiting_for_approval:
 
                 self._set_execution_state(execution_state)
@@ -134,6 +151,10 @@ class CopilotAssistant:
                 plan.intent,
                 execution_state.context,
             )
+        
+        # Workflow finished
+
+        self._set_execution_state(None)
 
         # ---------------------------------------
         # Otherwise use normal chat

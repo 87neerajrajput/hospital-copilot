@@ -300,6 +300,14 @@ Milestone 11
 └── 11.4 Clinical Memory            ✅
 
 
+Demo Release (v0.9)
+
+11.D1  Live Workflow Progress
+11.D2  Clinical Insights Dashboard
+11.D3  Email Reports
+11.D4  UI Polish
+
+
 Milestone 12
 Goal Tracking & Outcome Intelligence
         ↓

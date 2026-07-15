@@ -4,10 +4,16 @@ import asyncio
 
 from assistants.chat_assistant import ask_ai
 
+from ui.workflow_status import WorkflowStatus
+from copilot.workflow_events import workflow_events
+
 CHAT_HEIGHT = 600
 
 
 def render_chat():
+
+    if "pending_prompt" not in st.session_state:
+        st.session_state.pending_prompt = None
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
@@ -60,6 +66,8 @@ def render_chat():
                 use_container_width=True,
             ):
                 st.session_state.chat_history = []
+                workflow_events.clear_all()
+                st.session_state.workflow_id = None
                 st.rerun()
 
         # 2. Use custom HTML/CSS instead of st.divider() to force a tight margin
@@ -74,6 +82,8 @@ def render_chat():
     """, 
     unsafe_allow_html=True
 )
+
+
         #st.divider()
 
         # ---------- Chat Window ----------
@@ -96,13 +106,44 @@ def render_chat():
 
                 with st.chat_message(msg["role"]):
 
-                    st.markdown(msg["content"])
+                    # ------------------------------------------------
+                    # Assistant Workflow
+                    # ------------------------------------------------
+
+                    if msg["role"] == "assistant":
+
+                        workflow_id = msg.get(
+                            "workflow_id"
+                        )
+
+                        if workflow_id:
+
+                            with st.expander(
+
+                                "⚙️ Workflow",
+
+                                expanded=False,
+
+                            ):
+
+                                WorkflowStatus.render(
+                                    workflow_id
+                                )
+
+                    # ------------------------------------------------
+                    # Assistant/User Message
+                    # ------------------------------------------------
+
+                    st.markdown(
+                        msg["content"]
+                    )
 
         #st.divider()
 
         # ---------- Chat Input ----------
         # 1. Create a placeholder container ABOVE the chat input component
-        spinner_placeholder = st.container()
+        #spinner_placeholder = st.container()
+        #workflow_placeholder = st.empty()
 
         prompt = st.chat_input(
             #"Ask the AI Therapist..."
@@ -110,17 +151,6 @@ def render_chat():
         )
 
         if prompt:
-
-            # -----------------------------------
-            # Show User Message
-            # -----------------------------------
-
-            st.session_state.chat_history.append(
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            )
 
             # -----------------------------------
             # Build Patient Context
@@ -132,32 +162,114 @@ def render_chat():
 
                 patient = st.session_state.current_patient
 
-            # -----------------------------------
-            # AI Response
-            # -----------------------------------
-
             MAX_HISTORY = 6
 
-            history = st.session_state.chat_history[:-1] # [:-1] to exclude duplication of last message
+            history = st.session_state.chat_history[:-1]
 
-            with spinner_placeholder:
-                with st.spinner("Thinking..."):
-
-                    from assistants.copilot_assistant import CopilotAssistant
-                    copilot = CopilotAssistant()
-
-                    answer = asyncio.run(
-                        copilot.ask(
-                            question=prompt,
-                            patient=patient,
-                            chat_history=history[-MAX_HISTORY:],  
-                    ))
+            # -----------------------------------
+            # Show User Message Immediately
+            # -----------------------------------
 
             st.session_state.chat_history.append(
+
                 {
-                    "role": "assistant",
-                    "content": answer,
+                    "role": "user",
+                    "content": prompt,
                 }
+
             )
+
+            # -----------------------------------
+            # Store Pending Prompt
+            # -----------------------------------
+
+            st.session_state.pending_prompt = {
+
+                "question": prompt,
+
+                "patient": patient,
+
+                "history": history[-MAX_HISTORY:],
+
+            }
+
+            st.rerun()
+
+
+        # ==========================================================
+        # Execute Pending Prompt
+        # ==========================================================
+
+        if st.session_state.pending_prompt:
+
+            pending = st.session_state.pending_prompt
+
+            # -----------------------------------
+            # Clear Previous Workflow
+            # -----------------------------------
+
+            workflow_events.clear_all()
+
+            st.session_state.workflow_id = None
+
+            # -----------------------------------
+            # Execute Copilot
+            # -----------------------------------
+
+            from assistants.copilot_assistant import CopilotAssistant
+
+            copilot = CopilotAssistant()
+
+            answer = asyncio.run(
+
+                copilot.ask(
+
+                    question=pending["question"],
+
+                    patient=pending["patient"],
+
+                    chat_history=pending["history"],
+
+                )
+
+            )
+
+            # -----------------------------------
+            # Save Assistant Response
+            # -----------------------------------
+
+            st.session_state.chat_history.append(
+
+                {
+
+                    "role": "assistant",
+
+                    "content": answer,
+
+                    "workflow_id": st.session_state.get(
+                        "workflow_id"
+                    ),
+
+                }
+
+            )
+
+            # -----------------------------------
+            # Clear Pending Prompt
+            # -----------------------------------
+
+            st.session_state.pending_prompt = None
+
+            # -----------------------------------
+            # Debug
+            # -----------------------------------
+
+            from pprint import pprint
+
+            print("\n========== CHAT HISTORY ==========\n")
+
+            pprint(st.session_state.chat_history)
+
+            print("\n==================================\n")
 
             st.rerun()
