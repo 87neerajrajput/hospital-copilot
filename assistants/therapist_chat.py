@@ -7,7 +7,7 @@ from assistants.chat_assistant import ask_ai
 from ui.workflow_status import WorkflowStatus
 from copilot.workflow_events import workflow_events
 
-CHAT_HEIGHT = 600
+CHAT_HEIGHT = 580
 
 
 def render_chat():
@@ -68,6 +68,7 @@ def render_chat():
                 st.session_state.chat_history = []
                 workflow_events.clear_all()
                 st.session_state.workflow_id = None
+                st.session_state.pending_prompt = None
                 st.rerun()
 
         # 2. Use custom HTML/CSS instead of st.divider() to force a tight margin
@@ -220,19 +221,21 @@ def render_chat():
 
             copilot = CopilotAssistant()
 
-            answer = asyncio.run(
+            with st.spinner("🧠 Working..."):
 
-                copilot.ask(
+                answer = asyncio.run(
 
-                    question=pending["question"],
+                    copilot.ask(
 
-                    patient=pending["patient"],
+                        question=pending["question"],
 
-                    chat_history=pending["history"],
+                        patient=pending["patient"],
+
+                        chat_history=pending["history"],
+
+                    )
 
                 )
-
-            )
 
             # -----------------------------------
             # Save Assistant Response
@@ -259,17 +262,5 @@ def render_chat():
             # -----------------------------------
 
             st.session_state.pending_prompt = None
-
-            # -----------------------------------
-            # Debug
-            # -----------------------------------
-
-            from pprint import pprint
-
-            print("\n========== CHAT HISTORY ==========\n")
-
-            pprint(st.session_state.chat_history)
-
-            print("\n==================================\n")
 
             st.rerun()
