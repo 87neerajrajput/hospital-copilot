@@ -1,9 +1,5 @@
 import json
-
-from ui.dashboard.ai_summary.ai_summary_prompt import (
-    SYSTEM_PROMPT,
-)
-
+from prompts.ai_summary_prompt import AI_SUMMARY_SYSTEM_PROMPT
 
 class AISummaryBuilder:
 
@@ -38,7 +34,7 @@ class AISummaryBuilder:
 
         return {
 
-            "system": SYSTEM_PROMPT,
+            "system": AI_SUMMARY_SYSTEM_PROMPT,
 
             "user": json.dumps(
 

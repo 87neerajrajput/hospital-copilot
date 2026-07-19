@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from prompts.comparison_prompt import COMPARISON_SYSTEM_PROMPT, EVOLUTION_SYSTEM_PROMPT, TREND_SYSTEM_PROMPT
 from services.llm_service import llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
@@ -316,19 +317,9 @@ async def comparison_agent(
 
 
     comparison = structured_llm.invoke([
-    SystemMessage(
-        content="""
-        You are an experienced pediatric occupational therapist specializing in longitudinal treatment planning.
-
-        Your job is to compare therapy plans clinically, not grammatically.
-
-        Focus on therapeutic progression, treatment evolution, and clinical reasoning.
-
-        Return structured data only.
-        """
-            ),
-            HumanMessage(content=prompt)
-        ])
+        SystemMessage(content=COMPARISON_SYSTEM_PROMPT),
+        HumanMessage(content=prompt)
+    ])
     
 
     return comparison.model_dump()
@@ -361,17 +352,7 @@ def analyze_evolution(history):
 
     evolution = structured_evolution_llm.invoke(
         [
-            SystemMessage(
-                content="""
-You are an experienced pediatric occupational therapist.
-
-Your job is to analyze long-term therapy progression across multiple therapy plans.
-
-Focus on longitudinal clinical reasoning rather than comparing only two plans.
-
-Return structured data only.
-"""
-            ),
+            SystemMessage(content=EVOLUTION_SYSTEM_PROMPT),
             HumanMessage(content=prompt),
         ]
     )
@@ -416,35 +397,10 @@ Return structured data only.
 """
 
     trend = await trend_llm.ainvoke(
-
         [
-
-            SystemMessage(
-
-                content="""
-You are a senior pediatric occupational therapist.
-
-You specialize in identifying longitudinal rehabilitation trends.
-
-Your analysis must be objective, evidence-based, and clinically realistic.
-
-Never exaggerate improvement.
-
-Never invent regression.
-
-Use only the supplied therapy history.
-
-Return structured output only.
-"""
-
-            ),
-
-            HumanMessage(
-                content=prompt
-            )
-
+            SystemMessage(content=TREND_SYSTEM_PROMPT),
+            HumanMessage(content=prompt)
         ]
-
     )
 
     return trend.model_dump()
