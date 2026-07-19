@@ -5,17 +5,9 @@ from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from graph.state import HealthcareState
-#from tools.db_tools import save_therapy_plan
-
-from hospital_mcp.hospital_client import HospitalMCPClient
+from hospital_mcp.hospital_client import mcp
 
 load_dotenv()
-
-# ==========================================================
-# MCP CLIENT
-# ==========================================================
-
-mcp = HospitalMCPClient()
 
 # 1. Define the structural schema using Pydantic
 class WeeklyPlan(BaseModel):

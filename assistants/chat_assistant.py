@@ -8,7 +8,7 @@ from langchain_core.messages import (
 
 from langchain_groq import ChatGroq
 
-from hospital_mcp.hospital_client import HospitalMCPClient
+from hospital_mcp.hospital_client import mcp
 
 load_dotenv()
 
@@ -27,13 +27,6 @@ llm = ChatGroq(
     model="llama-3.1-8b-instant",
     temperature=0.3,
 )
-
-# ==========================================================
-# MCP CLIENT
-# ==========================================================
-
-mcp = HospitalMCPClient()
-
 
 # ==========================================================
 # SYSTEM PROMPT

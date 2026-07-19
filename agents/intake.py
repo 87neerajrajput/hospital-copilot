@@ -3,19 +3,9 @@ import asyncio
 
 from dotenv import load_dotenv
 from graph.state import HealthcareState
-#from tools.db_tools import save_patient
-
-from hospital_mcp.hospital_client import HospitalMCPClient
+from hospital_mcp.hospital_client import mcp
 
 load_dotenv()
-
-# ==========================================================
-# MCP CLIENT
-# ==========================================================
-
-mcp = HospitalMCPClient()
-
-
 
 # ============================================================
 # Merge therapist-entered information with AI assessment

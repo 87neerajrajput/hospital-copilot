@@ -17,14 +17,14 @@ Supported Tasks
 - update_patient
 """
 
-from hospital_mcp.hospital_client import HospitalMCPClient
+from hospital_mcp.hospital_client import mcp
 
 
 class PatientSkill:
 
     def __init__(self):
 
-        self.mcp = HospitalMCPClient()
+        self.mcp = mcp
 
     # ======================================================
     # EXECUTE

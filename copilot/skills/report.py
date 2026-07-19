@@ -19,14 +19,14 @@ from agents.report import report_agent
 
 from graph.state import HealthcareState
 
-from hospital_mcp.hospital_client import HospitalMCPClient
+from hospital_mcp.hospital_client import mcp
 
 
 class ReportSkill:
 
     def __init__(self):
 
-        self.mcp = HospitalMCPClient()
+        self.mcp = mcp
 
     # ======================================================
     # EXECUTE

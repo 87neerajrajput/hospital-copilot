@@ -1,12 +1,10 @@
 import asyncio
 
 from copilot.skills.therapy import TherapySkill
-from hospital_mcp.hospital_client import HospitalMCPClient
 
 
 async def main():
 
-    #mcp = HospitalMCPClient()
 
     skill = TherapySkill()
 

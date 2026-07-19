@@ -13,15 +13,13 @@ Current Tasks
 -------------
 - search_information
 """
-
-from hospital_mcp.hospital_client import HospitalMCPClient
-
+from hospital_mcp.hospital_client import mcp
 
 class KnowledgeSkill:
 
     def __init__(self):
 
-        self.mcp = HospitalMCPClient()
+        self.mcp = mcp
 
     # ======================================================
     # EXECUTE

@@ -9,16 +9,9 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from graph.state import HealthcareState
 from typing import Optional
 
-from hospital_mcp.hospital_client import HospitalMCPClient
+from hospital_mcp.hospital_client import mcp
 
 load_dotenv()
-
-# ==========================================================
-# MCP CLIENT
-# ==========================================================
-
-mcp = HospitalMCPClient()
-
 
 class Reports(BaseModel):
 

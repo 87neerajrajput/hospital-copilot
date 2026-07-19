@@ -1,12 +1,10 @@
 import asyncio
 
-from hospital_mcp.hospital_client import HospitalMCPClient
+from hospital_mcp.hospital_client import mcp
 from agents.comparison import comparison_agent
 
 
 async def main():
-
-    mcp = HospitalMCPClient()
 
     left = await mcp.get_therapy_plan(82)
     right = await mcp.get_therapy_plan(87)

@@ -1,10 +1,10 @@
-from hospital_mcp.hospital_client import HospitalMCPClient
+from hospital_mcp.hospital_client import mcp
 import asyncio
 
 
 async def main():
 
-    client = HospitalMCPClient()
+    client = mcp
 
     docs = await client.search_knowledge(
         query="Unsafe swallowing,high choking risk,poor swallowing coordination",

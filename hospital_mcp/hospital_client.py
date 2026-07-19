@@ -329,4 +329,43 @@ class HospitalMCPClient:
             "success": False,
             "message": "Unknown MCP error."
         }
-            
+
+
+    # ==========================================================
+    # Dashboard
+    # ==========================================================
+
+    async def get_patient_dashboard(self, patient_id: int):
+
+        result = await self._call_tool(
+            "get_patient_dashboard",
+            {
+                "patient_id": patient_id,
+            },
+        )
+
+        if not result.content:
+            return None
+
+        dashboard = json.loads(result.content[0].text)
+
+        # ------------------------------------------
+        # Convert datetime strings
+        # ------------------------------------------
+
+        for plan in dashboard.get("plans", []):
+
+            if plan.get("created_at"):
+
+                plan["created_at"] = datetime.fromisoformat(
+                    plan["created_at"]
+                )
+
+        return dashboard
+
+
+# ==========================================================
+# Shared MCP Client (Singleton)
+# ==========================================================
+
+mcp = HospitalMCPClient() 

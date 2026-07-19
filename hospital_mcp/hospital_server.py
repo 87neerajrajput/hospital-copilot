@@ -3,6 +3,7 @@ from mcp.server.fastmcp import FastMCP
 from hospital_mcp.rag_tools import search_knowledge
 
 from hospital_mcp.patient_tools import (
+    get_patient_dashboard,
     search_patients,
     get_patient,
     get_patient_plans,
@@ -151,6 +152,14 @@ def search_knowledge_tool(
     return search_knowledge(
         query=query,
         k=k,
+    )
+
+
+@mcp.tool(name="get_patient_dashboard")
+def get_patient_dashboard_tool(patient_id: int):
+
+    return get_patient_dashboard(
+        patient_id
     )
 
 # ==========================================================

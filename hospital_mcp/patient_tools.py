@@ -408,3 +408,96 @@ def save_report(
 
         cursor.close()
         conn.close()
+
+
+# ==========================================================
+# GET PATIENT DASHBOARD
+# ==========================================================
+
+def get_patient_dashboard(patient_id: int):
+
+    conn = get_connection()
+
+    try:
+
+        cursor = conn.cursor()
+
+        # --------------------------------------------------
+        # Patient
+        # --------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                name,
+                age,
+                diagnosis,
+                concerns
+            FROM patients
+            WHERE id=%s;
+            """,
+            (patient_id,),
+        )
+
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+
+        patient = {
+
+            "id": row[0],
+            "name": row[1],
+            "age": row[2],
+            "diagnosis": row[3],
+            "concerns": row[4].split(", ") if row[4] else [],
+
+        }
+
+        # --------------------------------------------------
+        # Therapy Plans
+        # --------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                created_at,
+                plan
+            FROM therapy_plans
+            WHERE patient_id=%s
+            ORDER BY created_at DESC;
+            """,
+            (patient_id,),
+        )
+
+        rows = cursor.fetchall()
+
+        plans = []
+
+        for row in rows:
+
+            plans.append({
+
+                "id": row[0],
+
+                "created_at": row[1],
+
+                **row[2],
+
+            })
+
+        return {
+
+            "patient": patient,
+
+            "plans": plans,
+
+        }
+
+    finally:
+
+        cursor.close()
+
+        conn.close()
