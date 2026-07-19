@@ -1,57 +1,47 @@
 import streamlit as st
 
-from ui.dashboard.clinical_alerts_analyzer import (
-    ClinicalAlertsAnalyzer,
-)
-
 
 class ClinicalAlerts:
 
     @staticmethod
-    def render(plans, latest_plan, previous_plan):
+    def render(alerts):
 
         with st.container(border=True):
 
             st.subheader("🚨 Clinical Alerts")
 
-            alerts = ClinicalAlertsAnalyzer.generate(
-
-                plans,
-
-                latest_plan,
-
-                previous_plan,
-
-            )
-
             if not alerts:
 
-                st.success(
-                    "No clinical alerts.\n\n"
-                    "Patient is progressing without any system-detected concerns."
-                )
+                st.success("No clinical alerts. Patient is progressing without any system-detected concerns.")
 
                 return
 
             for alert in alerts:
 
-                content = (
-                    f"**{alert['title']}**\n\n"
-                    f"{alert['message']}"
-                )
-
                 if alert["type"] == "error":
 
-                    st.error(content)
+                    st.error(
+                        f"**{alert['title']}**\n\n"
+                        f"{alert['message']}"
+                    )
 
                 elif alert["type"] == "warning":
 
-                    st.warning(content)
+                    st.warning(
+                        f"**{alert['title']}**\n\n"
+                        f"{alert['message']}"
+                    )
 
                 elif alert["type"] == "success":
 
-                    st.success(content)
+                    st.success(
+                        f"**{alert['title']}**\n\n"
+                        f"{alert['message']}"
+                    )
 
                 else:
 
-                    st.info(content)
+                    st.info(
+                        f"**{alert['title']}**\n\n"
+                        f"{alert['message']}"
+                    )

@@ -1,28 +1,27 @@
-from ui.dashboard.goal_evolution_analyzer import GoalEvolutionAnalyzer
-from ui.dashboard.goal_persistence_analyzer import GoalPersistenceAnalyzer
-from ui.dashboard.focus_area_evolution_analyzer import FocusAreaEvolutionAnalyzer
+from ui.dashboard.evidence.clinical_evidence import (
+    ClinicalEvidence,
+)
 
 
 class ClinicalTrajectoryAnalyzer:
 
     @staticmethod
-    def generate(plans, latest_plan, previous_plan):
-
-        reasons = []
+    def generate(
+        evidence: ClinicalEvidence,
+    ):
 
         positive = 0
         negative = 0
+
+        reasons = []
 
         # -----------------------------------------
         # Goal Evolution
         # -----------------------------------------
 
-        if previous_plan:
+        evolution = evidence.goal_evolution
 
-            evolution = GoalEvolutionAnalyzer.generate(
-                previous_plan,
-                latest_plan,
-            )
+        if evolution:
 
             if evolution["added"]:
 
@@ -33,9 +32,9 @@ class ClinicalTrajectoryAnalyzer:
                 )
 
             if (
-                len(evolution["added"]) == 0
+                not evolution["added"]
                 and
-                len(evolution["removed"]) == 0
+                not evolution["removed"]
             ):
 
                 negative += 1
@@ -48,15 +47,11 @@ class ClinicalTrajectoryAnalyzer:
         # Goal Persistence
         # -----------------------------------------
 
-        persistence = GoalPersistenceAnalyzer.generate(
-            plans
-        )
-
         persistent = [
 
             goal
 
-            for goal in persistence
+            for goal in evidence.goal_persistence
 
             if goal["percent"] >= 75
 
@@ -67,39 +62,51 @@ class ClinicalTrajectoryAnalyzer:
             negative += 1
 
             reasons.append(
+
                 f"{len(persistent)} goals have persisted across most therapy plans."
+
             )
 
         # -----------------------------------------
-        # Focus Area Diversity
+        # Focus Evolution
         # -----------------------------------------
 
-        focus = FocusAreaEvolutionAnalyzer.generate(
-            plans
-        )
-
-        if len(focus) >= 4:
+        if len(evidence.focus_evolution) >= 4:
 
             positive += 1
 
             reasons.append(
+
                 "Therapy has addressed multiple functional domains."
+
             )
 
         # -----------------------------------------
-        # Therapy Duration
+        # Alerts
         # -----------------------------------------
 
-        if len(plans) >= 6:
+        high_alerts = [
+
+            a
+
+            for a in evidence.alerts
+
+            if a["type"] == "error"
+
+        ]
+
+        if high_alerts:
 
             negative += 1
 
             reasons.append(
-                "Long-term therapy suggests ongoing clinical needs."
+
+                "Critical clinical alerts are present."
+
             )
 
         # -----------------------------------------
-        # Final Classification
+        # Classification
         # -----------------------------------------
 
         score = positive - negative

@@ -6,7 +6,7 @@ class TherapyProgress:
     @staticmethod
     def render(plan):
 
-        with st.container(border=True):
+        with st.container():
 
             st.subheader("🎯 Active Therapy Goals")
 

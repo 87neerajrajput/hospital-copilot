@@ -1,55 +1,38 @@
 import streamlit as st
 
-from ui.dashboard.clinical_trajectory_analyzer import (
-    ClinicalTrajectoryAnalyzer,
-)
-
 
 class ClinicalTrajectory:
 
     @staticmethod
-    def render(
-        plans,
-        latest_plan,
-        previous_plan,
-    ):
+    def render(trajectory):
 
         with st.container(border=True):
 
             st.subheader("🧠 Clinical Trajectory")
 
-            if not latest_plan:
+            if not trajectory:
 
-                st.info(
-                    "No therapy plans available."
-                )
+                st.info("Trajectory unavailable.")
 
                 return
 
-            result = ClinicalTrajectoryAnalyzer.generate(
-
-                plans,
-
-                latest_plan,
-
-                previous_plan,
-
-            )
-
             text = (
-                f"**{result['status']}**\n\n"
-                f"Confidence: {result['confidence']}"
+
+                f"**{trajectory['status']}**\n\n"
+
+                f"Confidence: {trajectory['confidence']}"
+
             )
 
-            if result["status"] == "Improving":
+            if trajectory["status"] == "Improving":
 
                 st.success(text)
 
-            elif result["status"] == "Stable":
+            elif trajectory["status"] == "Stable":
 
                 st.info(text)
 
-            elif result["status"] == "Plateauing":
+            elif trajectory["status"] == "Plateauing":
 
                 st.warning(text)
 
@@ -59,6 +42,6 @@ class ClinicalTrajectory:
 
             st.markdown("### Evidence")
 
-            for reason in result["reasons"]:
+            for reason in trajectory["reasons"]:
 
                 st.markdown(f"- {reason}")

@@ -22,6 +22,10 @@ from ui.dashboard.evidence.clinical_evidence import (
     ClinicalEvidence,
 )
 
+from ui.dashboard.clinical_trajectory_analyzer import (
+    ClinicalTrajectoryAnalyzer,
+)
+
 
 class ClinicalEvidenceBuilder:
 
@@ -69,5 +73,17 @@ class ClinicalEvidenceBuilder:
             ),
 
         )
+
+        evidence.trajectory = (
+
+            ClinicalTrajectoryAnalyzer.generate(
+
+                evidence
+
+            )
+
+        )
+
+        evidence.ai_summary = ""
 
         return evidence

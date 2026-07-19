@@ -1,6 +1,7 @@
 import asyncio
 import streamlit as st
 
+from ui.dashboard.ai_summary.ai_summary_builder import AISummaryBuilder
 from ui.dashboard.goal_evolution import GoalEvolution
 from ui.dashboard.patient_summary import PatientSummary
 from ui.dashboard.therapy_progress import TherapyProgress
@@ -16,6 +17,7 @@ from ui.dashboard.clinical_trajectory import ClinicalTrajectory
 from ui.dashboard.evidence.clinical_evidence_builder import (
     ClinicalEvidenceBuilder,
 )
+from agents.planner import llm
 from hospital_mcp.hospital_client import mcp
 
 # ==========================================================
@@ -69,6 +71,31 @@ class ClinicalDashboard:
             previous_plan,
         )
 
+        # ==========================================
+        # Generate AI Summary
+        # ==========================================
+
+        prompt = AISummaryBuilder.build(
+            patient,
+            evidence,
+        )
+
+        response = llm.invoke(
+            [
+                (
+                    "system",
+                    prompt["system"],
+                ),
+
+                (
+                    "human",
+                    prompt["user"],
+                ),
+            ]
+        )
+
+        evidence.ai_summary = response.content
+
         activities = []
 
         for plan in full_plans:
@@ -95,19 +122,44 @@ class ClinicalDashboard:
         )
 
         with left:
-            PatientSummary.render(patient)
+            with st.container(height=500, border=True):
+                PatientSummary.render(patient)
+
+        # ------------------------------------------
+        # RIGHT COLUMN
+        # ------------------------------------------
 
         with right:
-            TherapyProgress.render(latest_plan)
+            with st.container(height=500):
+                # -----------------------------
+                # AI Summary
+                # -----------------------------
 
-        st.markdown(
-            "<div style='height:18px'></div>",
-            unsafe_allow_html=True
-        )
+                AIInsights.render(
+                    evidence.ai_summary
+                )
+
+                # st.markdown(
+                #     "<div style='height:19px'></div>",
+                #     unsafe_allow_html=True,
+                # )
+
+                # -----------------------------
+                # Active Therapy Goals
+                # -----------------------------
+
+                TherapyProgress.render(
+                    latest_plan
+                )
 
         # ==========================================
         # Row 2
         # ==========================================
+
+        st.markdown(
+            "<div style='height:18px'></div>",
+            unsafe_allow_html=True,
+        )
 
         left, right = st.columns(
             [1, 1],
@@ -115,40 +167,31 @@ class ClinicalDashboard:
         )
 
         with left:
-            TherapyTimeline.render(full_plans)
+            with st.container(height=600, border=True):
+                ClinicalSummary.render(
+                    patient,
+                    full_plans,
+                    latest_plan,
+                )
 
         with right:
-            AIInsights.render(latest_plan)
-
-        st.markdown(
-            "<div style='height:18px'></div>",
-            unsafe_allow_html=True
-        )
+            with st.container(height=600, border=True):
+                GoalEvolution.render(
+                    evidence.goal_evolution
+                )
 
         # ==========================================
         # Row 3
         # ==========================================
 
-        left, center, right = st.columns(
-            [1, 1, 1],
-            gap="large",
+        st.markdown(
+            "<div style='height:18px'></div>",
+            unsafe_allow_html=True,
         )
 
-        with left:
-            RecentActivity.render(activities)
-
-        with center:
-            ClinicalSummary.render(
-                patient,
-                full_plans,
-                latest_plan,
-            )
-
-        with right:
-            GoalEvolution.render(
-                previous_plan,
-                latest_plan,
-            )
+        ClinicalTrajectory.render(
+            evidence.trajectory
+        )
 
         
         # ==========================================
@@ -161,10 +204,8 @@ class ClinicalDashboard:
         )
 
         ClinicalAlerts.render(
-            full_plans,
-            latest_plan,
-            previous_plan,
-        )
+            evidence.alerts
+        ) 
 
         # ==========================================
         # Row 5
@@ -175,9 +216,23 @@ class ClinicalDashboard:
             unsafe_allow_html=True,
         )
 
-        TherapyJourney.render(
-            full_plans
+        left, right = st.columns(
+            [1, 1],
+            gap="large",
         )
+
+        with left:
+            with st.container(height=700, border=True):
+                FocusAreaEvolution.render(
+                    evidence.focus_evolution
+                )
+
+        with right:
+            with st.container(height=700, border=True):
+                GoalPersistence.render(
+                    evidence.goal_persistence
+                )
+
 
         # ==========================================
         # Row 6
@@ -188,9 +243,24 @@ class ClinicalDashboard:
             unsafe_allow_html=True,
         )
 
-        FocusAreaEvolution.render(
-            full_plans
+        left, center, right = st.columns(
+            [1, 1, 1],
+            gap="large",
         )
+
+        with left:
+            with st.container(height=550, border=True):
+                TherapyJourney.render(
+                    evidence.therapy_journey
+                )
+
+        with center:
+            with st.container(height=550, border=True):
+                TherapyTimeline.render(full_plans)
+
+        with right:
+            with st.container(height=550, border=True):
+                RecentActivity.render(activities)
 
         # ==========================================
         # Row 7
@@ -198,28 +268,14 @@ class ClinicalDashboard:
 
         st.markdown(
             "<div style='height:18px'></div>",
-            unsafe_allow_html=True,
+            unsafe_allow_html=True
         )
 
-        GoalPersistence.render(
-            full_plans
-        )
+        with st.expander("AI Prompt", expanded=False):
 
-        # ==========================================
-        # Row 8
-        # ==========================================
+            prompt = AISummaryBuilder.build(
+                patient,
+                evidence,
+            )
 
-        st.markdown(
-            "<div style='height:18px'></div>",
-            unsafe_allow_html=True,
-        )
-
-        ClinicalTrajectory.render(
-
-            full_plans,
-
-            latest_plan,
-
-            previous_plan,
-
-        )
+            st.code(prompt["user"], language="json",)

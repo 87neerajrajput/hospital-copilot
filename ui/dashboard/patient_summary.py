@@ -6,7 +6,7 @@ class PatientSummary:
     @staticmethod
     def render(patient):
 
-        with st.container(border=True):
+        with st.container():
 
             st.subheader("👤 Patient Summary")
 
@@ -43,7 +43,7 @@ class PatientSummary:
             # --------------------------------------------------
 
             st.markdown(
-                f"## {name}"
+                f"### {name}"
             )
 
             subtitle = []
@@ -60,8 +60,6 @@ class PatientSummary:
             st.caption(
                 " • ".join(subtitle)
             )
-
-            st.divider()
 
             # --------------------------------------------------
             # Metrics
@@ -87,20 +85,20 @@ class PatientSummary:
 
             metrics_container, _ = st.columns([3, 2])
 
-            with metrics_container:
+            # with metrics_container:
 
-                cols = st.columns(len(metrics))
+            #     cols = st.columns(len(metrics))
 
-                for col, (label, value) in zip(cols, metrics):
+            #     for col, (label, value) in zip(cols, metrics):
 
-                    with col:
+            #         with col:
 
-                        st.metric(
-                            label=label,
-                            value=value,
-                        )
+            #             st.metric(
+            #                 label=label,
+            #                 value=value,
+            #             )
 
-            st.divider()
+            # st.divider()
 
             st.markdown("#### 🎯 Primary Concerns")
 

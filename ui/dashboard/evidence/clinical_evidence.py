@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -13,3 +13,7 @@ class ClinicalEvidence:
     alerts: list
 
     therapy_journey: list
+
+    trajectory: dict = field(default_factory=dict)
+
+    ai_summary: str = ""

@@ -1,66 +1,154 @@
-import streamlit as st
+# import streamlit as st
 
-from ui.dashboard.goal_evolution_analyzer import (
-    GoalEvolutionAnalyzer,
-)
+
+# class GoalEvolution:
+
+#     @staticmethod
+#     def render(goal_evolution):
+
+#         with st.container():
+
+#             st.subheader("🧬 Goal Evolution")
+
+#             if not goal_evolution:
+
+#                 st.info("Goal comparison not available.")
+#                 return
+
+#             sections = [
+
+#                 (
+#                     "➕ Added Goals",
+#                     goal_evolution["added"],
+#                     "success",
+#                 ),
+
+#                 (
+#                     "➖ Removed Goals",
+#                     goal_evolution["removed"],
+#                     "warning",
+#                 ),
+
+#                 (
+#                     "➡ Continuing Goals",
+#                     goal_evolution["continued"],
+#                     "info",
+#                 ),
+
+#             ]
+
+#             for title, goals, style in sections:
+
+#                 st.markdown(f"##### {title}")
+
+#                 if not goals:
+
+#                     st.caption("None")
+
+#                 else:
+
+#                     for goal in goals:
+
+#                         if style == "success":
+
+#                             st.success(goal)
+
+#                         elif style == "warning":
+
+#                             st.warning(goal)
+
+#                         else:
+
+#                             st.info(goal)
+
+#                 st.markdown("")
+
+import streamlit as st
+import plotly.graph_objects as go
 
 
 class GoalEvolution:
 
     @staticmethod
-    def render(previous_plan, latest_plan):
+    def render(goal_evolution):
 
-        with st.container(border=True):
+        st.subheader("🧬 Goal Evolution")
 
-            st.subheader("🧬 Goal Evolution")
+        added = goal_evolution["added"]
+        removed = goal_evolution["removed"]
+        continued = goal_evolution["continued"]
 
-            if not latest_plan:
-
-                st.info("No therapy plans available.")
-                return
-
-            if not previous_plan:
-
-                st.info(
-                    "Only one therapy plan exists.\n\n"
-                    "Goal comparison will appear after the next plan is created."
+        fig = go.Figure(
+            data=[
+                go.Pie(
+                    labels=[
+                        "Added",
+                        "Removed",
+                        "Continuing",
+                    ],
+                    values=[
+                        len(added),
+                        len(removed),
+                        len(continued),
+                    ],
+                    textinfo="label+percent",
+                    textposition="inside",
+                    marker=dict(
+                        colors=[
+                            "#22c55e",
+                            "#ef4444",
+                            "#3b82f6",
+                        ]
+                    ),
                 )
-                return
-
-            evolution = GoalEvolutionAnalyzer.generate(
-                previous_plan,
-                latest_plan,
-            )
-
-            sections = [
-
-                ("➕ Added Goals", evolution["added"], "success"),
-
-                ("➖ Removed Goals", evolution["removed"], "warning"),
-
-                ("➡ Continuing Goals", evolution["continued"], "info"),
-
             ]
+        )
 
-            for title, goals, style in sections:
+        fig.update_layout(
+            height=320,
+            margin=dict(
+                l=10,
+                r=10,
+                t=10,
+                b=10,
+            ),
+            showlegend=True,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
 
-                st.markdown(f"#### {title}")
+        st.plotly_chart(
+            fig,
+            width='stretch',
+            config={
+                "displayModeBar": False,
+            },
+        )
 
-                if not goals:
+        st.divider()
 
-                    st.caption("None")
+        st.markdown("#### 🟢 Added Goals")
 
-                else:
+        if added:
 
-                    for goal in goals:
+            for goal in added:
 
-                        if style == "success":
-                            st.success(goal)
+                st.success(goal)
 
-                        elif style == "warning":
-                            st.warning(goal)
+        else:
 
-                        else:
-                            st.info(goal)
+            st.caption("No new goals added.")
 
-                st.markdown("")
+        st.divider()
+
+        st.markdown("#### 🔴 Removed Goals")
+
+        if removed:
+
+            for goal in removed:
+
+                st.warning(goal)
+
+        else:
+
+            st.caption("No goals removed.")

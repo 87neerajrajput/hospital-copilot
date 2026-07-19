@@ -19,5 +19,6 @@ dependencies = [
     "google-generativeai",
     "langchain-chroma",
     "pymupdf",
-    "mcp[cli]"
+    "mcp[cli]",
+    "plotly"
 ]

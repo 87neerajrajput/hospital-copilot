@@ -1,36 +1,25 @@
 import streamlit as st
 
-from ui.dashboard.therapy_journey_analyzer import (
-    TherapyJourneyAnalyzer,
-)
-
 
 class TherapyJourney:
 
     @staticmethod
-    def render(plans):
+    def render(journey):
 
-        with st.container(border=True):
+        with st.container():
 
             st.subheader("📈 Therapy Journey")
 
-            if not plans:
+            if not journey:
 
                 st.info("No therapy plans available.")
-
                 return
-
-            journey = TherapyJourneyAnalyzer.generate(
-                plans
-            )
 
             for step in journey:
 
                 with st.expander(
 
-                    step["date"].strftime(
-                        "%d %b %Y"
-                    ),
+                    step["date"].strftime("%d %b %Y"),
 
                     expanded=False,
 
@@ -59,7 +48,7 @@ class TherapyJourney:
 
                         for goal in step["added"]:
 
-                            st.write("➕", goal)
+                            st.write(f"➕ {goal}")
 
                     if step["removed"]:
 
@@ -67,4 +56,4 @@ class TherapyJourney:
 
                         for goal in step["removed"]:
 
-                            st.write("➖", goal)
+                            st.write(f"➖ {goal}")

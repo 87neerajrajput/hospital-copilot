@@ -1,41 +1,26 @@
 import streamlit as st
 
-from ui.dashboard.goal_persistence_analyzer import (
-    GoalPersistenceAnalyzer,
-)
-
 
 class GoalPersistence:
 
     @staticmethod
-    def render(plans):
+    def render(goal_persistence):
 
-        with st.container(border=True):
+        with st.container():
 
             st.subheader("🎯 Goal Persistence")
 
-            if not plans:
+            if not goal_persistence:
 
-                st.info("No therapy plans available.")
-
-                return
-
-            data = GoalPersistenceAnalyzer.generate(
-                plans
-            )
-
-            if not data:
-
-                st.info("No therapy goals found.")
-
+                st.info("No therapy goals available.")
                 return
 
             max_count = max(
                 item["count"]
-                for item in data
+                for item in goal_persistence
             )
 
-            for item in data:
+            for item in goal_persistence:
 
                 left, right = st.columns(
                     [4, 2]

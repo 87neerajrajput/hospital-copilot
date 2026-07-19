@@ -1,41 +1,57 @@
 import streamlit as st
-from ui.dashboard.dashboard_analyzer import DashboardAnalyzer
 
 class AIInsights:
 
     @staticmethod
-    def render(plan):
+    def render(summary):
 
-        with st.container(border=True):
+        with st.container():
 
-            st.subheader("🧠 AI Insights")
+            st.subheader("🧠 AI Clinical Summary")
 
-            insights = DashboardAnalyzer.generate(plan)
+            if not summary:
 
-            if not insights:
-
-                st.info("No insights available.")
-                return
-
-            for insight in insights:
-
-                content = (
-                    f"{insight['icon']} **{insight['title']}**\n\n"
-                    f"{insight['message']}"
+                st.info(
+                    "AI summary unavailable."
                 )
 
-                if insight["type"] == "success":
+                return
 
-                    st.success(content)
+            st.success(summary)
 
-                elif insight["type"] == "warning":
+    # @staticmethod
+    # def render(plan):
 
-                    st.warning(content)
+    #     with st.container(border=True):
 
-                elif insight["type"] == "error":
+    #         st.subheader("🧠 AI Insights")
 
-                    st.error(content)
+    #         insights = DashboardAnalyzer.generate(plan)
 
-                else:
+    #         if not insights:
 
-                    st.info(content)
+    #             st.info("No insights available.")
+    #             return
+
+    #         for insight in insights:
+
+    #             content = (
+    #                 f"{insight['icon']} **{insight['title']}**\n\n"
+    #                 f"{insight['message']}"
+    #             )
+
+    #             if insight["type"] == "success":
+
+    #                 st.success(content)
+
+    #             elif insight["type"] == "warning":
+
+    #                 st.warning(content)
+
+    #             elif insight["type"] == "error":
+
+    #                 st.error(content)
+
+    #             else:
+
+    #                 st.info(content)

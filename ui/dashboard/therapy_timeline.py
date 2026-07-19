@@ -6,7 +6,7 @@ class TherapyTimeline:
     @staticmethod
     def render(plans):
 
-        with st.container(border=True):
+        with st.container():
 
             st.subheader("🗓 Therapy Timeline")
 

@@ -1,41 +1,26 @@
 import streamlit as st
 
-from ui.dashboard.focus_area_evolution_analyzer import (
-    FocusAreaEvolutionAnalyzer,
-)
-
 
 class FocusAreaEvolution:
 
     @staticmethod
-    def render(plans):
+    def render(focus_evolution):
 
-        with st.container(border=True):
+        with st.container():
 
             st.subheader("📊 Focus Area Evolution")
 
-            if not plans:
+            if not focus_evolution:
 
-                st.info("No therapy plans available.")
-
-                return
-
-            data = FocusAreaEvolutionAnalyzer.generate(
-                plans
-            )
-
-            if not data:
-
-                st.info("No focus areas found.")
-
+                st.info("No focus areas available.")
                 return
 
             max_count = max(
                 item["count"]
-                for item in data
+                for item in focus_evolution
             )
 
-            for item in data:
+            for item in focus_evolution:
 
                 left, right = st.columns(
                     [4, 2]
@@ -47,15 +32,15 @@ class FocusAreaEvolution:
                         f"**{item['focus_area']}**"
                     )
 
-                    progress = item["count"] / max_count
-
-                    st.progress(progress)
+                    st.progress(
+                        item["count"] / max_count
+                    )
 
                 with right:
 
                     st.metric(
 
-                        "Occurrences",
+                        "Plans",
 
                         item["count"],
 

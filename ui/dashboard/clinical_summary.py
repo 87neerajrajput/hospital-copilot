@@ -16,9 +16,9 @@ class ClinicalSummary:
             latest_plan,
         )
 
-        with st.container(border=True):
+        with st.container():
 
-            st.subheader("📊 Clinical Summary")
+            st.subheader("📊 Clinical Statistics")
 
             col1, col2 = st.columns(2)
 

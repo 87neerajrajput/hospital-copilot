@@ -6,7 +6,7 @@ class RecentActivity:
     @staticmethod
     def render(activities):
 
-        with st.container(border=True):
+        with st.container():
 
             st.subheader("📝 Recent Activity")
 
