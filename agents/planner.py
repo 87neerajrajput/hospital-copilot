@@ -1,13 +1,10 @@
 from typing import List
 from pydantic import BaseModel, Field
-from langchain_groq import ChatGroq
-from dotenv import load_dotenv
+from services.llm_service import llm
 from langchain_core.messages import SystemMessage, HumanMessage
-
+from prompts.agent_planner_prompt import PLANNER_SYSTEM_PROMPT
 from graph.state import HealthcareState
 from hospital_mcp.hospital_client import mcp
-
-load_dotenv()
 
 # 1. Define the structural schema using Pydantic
 class WeeklyPlan(BaseModel):
@@ -26,22 +23,12 @@ class TherapyPlan(BaseModel):
     weekly_schedule: List[WeeklyPlan]
     home_program: List[HomeProgramActivity]
 
-# 2. Initialize the Groq model
-# Low temperature (0) keeps the extraction strict and deterministic
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile", 
-    #model="llama-3.1-8b-instant",
-    temperature=0
-)
 
-# 3. Create the structured wrapper
+# 2. Create the structured wrapper
 # This forces the LLM to output data fitting the Pydantic schema perfectly
 structured_llm = llm.with_structured_output(TherapyPlan)
 
 # 4. Define your execution prompt
-
-
-
 async def planning_agent(state: HealthcareState, auto_save: bool = True):
     print("\n=== Planning Agent ===")
     patient_info = state['patient_info']
@@ -235,27 +222,7 @@ async def planning_agent(state: HealthcareState, auto_save: bool = True):
     # 5. Invoke the structured model
     # The output is NOT a string or markdown text. It is a Python Pydantic Object.
     profile = structured_llm.invoke([
-        SystemMessage(content="""
-        You are a senior pediatric occupational therapist responsible for creating high-quality longitudinal therapy plans.
-
-        Your therapy plans will undergo clinical quality assurance review.
-
-        Requirements:
-
-        - Address every identified concern.
-        - Create specific and measurable SMART therapy goals.
-        - Generate a clinically progressive 4-week therapy schedule.
-        - Ensure weekly activities support therapy goals.
-        - Ensure home program activities reinforce therapy goals.
-        - Use recommendations supported by retrieved clinical knowledge.
-        - Ensure recommendations are safe, practical and age appropriate.
-        - Maintain continuity with previous approved therapy plans whenever Clinical Memory is available.
-        - Progress treatment appropriately rather than restarting therapy.
-        - Avoid unnecessary duplication of goals, schedules or home programs from previous plans.
-        - Every recommendation should be clinically defensible.
-
-        Your output must be internally consistent, evidence-based and suitable for documentation in a pediatric rehabilitation setting.
-        """),
+        SystemMessage(content=PLANNER_SYSTEM_PROMPT),
         HumanMessage(content=PROMPT)
     ])
 

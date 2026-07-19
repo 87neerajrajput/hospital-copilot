@@ -1,32 +1,17 @@
-from dotenv import load_dotenv
 
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
     AIMessage,
 )
-
-from langchain_groq import ChatGroq
-
+from services.llm_service import llm
 from hospital_mcp.hospital_client import mcp
-
-load_dotenv()
 
 # ==========================================================
 # CONFIG
 # ==========================================================
 
 MAX_HISTORY = 6
-
-# ==========================================================
-# LLM
-# ==========================================================
-
-llm = ChatGroq(
-    #model="llama-3.3-70b-versatile",
-    model="llama-3.1-8b-instant",
-    temperature=0.3,
-)
 
 # ==========================================================
 # SYSTEM PROMPT

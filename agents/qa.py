@@ -1,13 +1,8 @@
 from typing import List
-
-from dotenv import load_dotenv
 from pydantic import BaseModel
-from langchain_groq import ChatGroq
+from services.llm_service import llm
 from langchain_core.messages import SystemMessage, HumanMessage
-
 from graph.state import HealthcareState
-
-load_dotenv()
 
 class QAResult(BaseModel):
 
@@ -29,12 +24,6 @@ class QAResult(BaseModel):
 
     suggestions: List[str]
 
-
-llm = ChatGroq(
-    #model="llama-3.3-70b-versatile",
-    model="llama-3.1-8b-instant",
-    temperature=0
-)
 
 structured_llm = llm.with_structured_output(QAResult)
 

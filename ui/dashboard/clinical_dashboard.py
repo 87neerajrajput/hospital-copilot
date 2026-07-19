@@ -17,7 +17,7 @@ from ui.dashboard.clinical_trajectory import ClinicalTrajectory
 from ui.dashboard.evidence.clinical_evidence_builder import (
     ClinicalEvidenceBuilder,
 )
-from agents.planner import llm
+from services.llm_service import llm
 from hospital_mcp.hospital_client import mcp
 
 # ==========================================================

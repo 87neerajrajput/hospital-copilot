@@ -1,15 +1,7 @@
 import json
 import re
-from typing import List
-
-from dotenv import load_dotenv
-
-from pydantic import BaseModel, Field
-
-from langchain_groq import ChatGroq
-
-load_dotenv()
-
+from pydantic import BaseModel
+from services.llm_service import llm
 
 # ======================================================
 # Output Schema
@@ -42,16 +34,6 @@ class AssessmentSummary(BaseModel):
     strengths: list[str]
 
     recommendations: list[str]
-
-
-# ======================================================
-# LLM
-# ======================================================
-
-llm = ChatGroq(
-    model="llama-3.1-8b-instant",
-    temperature=0,
-)
 
 
 # ======================================================

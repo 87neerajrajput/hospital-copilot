@@ -1,17 +1,10 @@
 
 from pydantic import BaseModel, Field
-
-from dotenv import load_dotenv
-
-from langchain_groq import ChatGroq
+from services.llm_service import llm
 from langchain_core.messages import SystemMessage, HumanMessage
-
 from graph.state import HealthcareState
 from typing import Optional
-
 from hospital_mcp.hospital_client import mcp
-
-load_dotenv()
 
 class Reports(BaseModel):
 
@@ -19,12 +12,6 @@ class Reports(BaseModel):
 
     parent_report: Optional[str] = Field(default=None, description="Parent-friendly report")
 
-
-llm = ChatGroq(
-    #model="llama-3.3-70b-versatile",
-    model="llama-3.1-8b-instant",
-    temperature=0
-)
 
 structured_llm = llm.with_structured_output(Reports)
 

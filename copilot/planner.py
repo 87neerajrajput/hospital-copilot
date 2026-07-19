@@ -19,26 +19,11 @@ Execution planning is handled by:
 """
 
 from pydantic import BaseModel, Field
-
-from dotenv import load_dotenv
-
-from langchain_groq import ChatGroq
-
-load_dotenv()
-
-# ==========================================================
-# LLM
-# ==========================================================
-
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    temperature=0,
-)
+from services.llm_service import llm
 
 # ==========================================================
 # MODELS
 # ==========================================================
-
 
 class WorkflowRequest(BaseModel):
 

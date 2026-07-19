@@ -21,7 +21,7 @@ Execution planning is delegated to:
 
 from pydantic import BaseModel, Field
 
-from langchain_groq import ChatGroq
+from services.llm_service import llm
 
 from copilot.intent_registry import INTENTS
 
@@ -51,18 +51,6 @@ class SupervisorDecision(BaseModel):
 
     report_types: list[str] | None = None
 
-
-# ==========================================================
-# LLM
-# ==========================================================
-
-llm = ChatGroq(
-
-    model="llama-3.3-70b-versatile",
-
-    temperature=0,
-
-)
 
 structured_llm = llm.with_structured_output(
     SupervisorDecision
