@@ -1,7 +1,7 @@
 
 import asyncio
 from graph.state import HealthcareState
-from hospital_mcp.hospital_client import mcp
+from services.hospital_service import HospitalService
 
 # ============================================================
 # Merge therapist-entered information with AI assessment
@@ -124,11 +124,9 @@ def intake_agent(state: HealthcareState):
 
         patient_id = state["patient_id"]
 
-        result = asyncio.run(
-            mcp.update_patient(
-                patient_id,
-                patient_info,
-            )
+        result = HospitalService.update_patient(
+            patient_id,
+            patient_info,
         )
 
         if result["success"]:
@@ -138,10 +136,8 @@ def intake_agent(state: HealthcareState):
 
     else:
 
-        result = asyncio.run(
-            mcp.save_patient(
-                patient_info
-            )
+        result = HospitalService.save_patient(
+            patient_info
         )
         
         if result["success"]:

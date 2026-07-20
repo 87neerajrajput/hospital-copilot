@@ -18,11 +18,7 @@ from ui.dashboard.evidence.clinical_evidence_builder import (
     ClinicalEvidenceBuilder,
 )
 from services.llm_service import llm
-from hospital_mcp.hospital_client import mcp
-
-# ==========================================================
-# MCP CLIENT
-# ==========================================================
+from services.hospital_service import HospitalService
 
 class ClinicalDashboard:
 
@@ -30,14 +26,10 @@ class ClinicalDashboard:
     def render(patient_id: int):
 
         # ------------------------------------------
-        # Load dashboard from MCP
+        # Load dashboard from HospitalService
         # ------------------------------------------
 
-        dashboard = asyncio.run(
-            mcp.get_patient_dashboard(
-                patient_id
-            )
-        )
+        dashboard = HospitalService.get_patient_dashboard(patient_id)
 
         if not dashboard:
 

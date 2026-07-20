@@ -1,8 +1,6 @@
 import asyncio
 import uuid
 
-import mcp
-
 import streamlit as st
 
 from langgraph.types import Command
@@ -24,7 +22,7 @@ from document_processing.text_cleaner import clean_pdf_text
 
 from assistants.assessment_extractor import extract_assessment_information
 
-from hospital_mcp.hospital_client import mcp
+from services.hospital_service import HospitalService
 
 
 # ==========================================
@@ -268,9 +266,7 @@ search_text = st.sidebar.text_input(
 if st.sidebar.button("🔍 Search"):
 
     st.session_state.search_results = (
-        asyncio.run(
-            mcp.search_patients(search_text)
-        )
+        HospitalService.search_patients(search_text)
     )
 
     if st.session_state.search_results:
@@ -329,19 +325,14 @@ if st.session_state.search_results:
                 patient_options[selected_label]
             )
 
-            #patient = get_patient(patient_id)
-            patient = asyncio.run(
-                mcp.get_patient(patient_id)
-            )
+            patient = HospitalService.get_patient(patient_id)
 
             st.session_state.selected_patient_id = (
                 patient_id
             )
 
             st.session_state.patient_plans = (
-                asyncio.run(
-                    mcp.get_patient_plans(patient_id)
-                )
+                HospitalService.get_patient_plans(patient_id)
             )
 
             st.session_state.loaded_patient = patient
@@ -426,13 +417,7 @@ if st.session_state.selected_patient_id:
                 ]
             )
 
-            # st.session_state.selected_plan = (
-            #     get_therapy_plan(plan_id)
-            # )
-
-            plan =  asyncio.run(
-                        mcp.get_therapy_plan(plan_id)
-                    )
+            plan =  HospitalService.get_therapy_plan(plan_id)
 
             st.session_state.selected_plan = plan["therapy_plan"]
 
@@ -941,12 +926,8 @@ elif page == AppPage.WORKSPACE:
                 if st.session_state.selected_patient_id:
 
                     st.session_state.patient_plans = (
-                            asyncio.run(
-                            mcp.get_patient_plans(st.session_state.selected_patient_id)
-                        )
+                        HospitalService.get_patient_plans(st.session_state.selected_patient_id)
                     )
-
-
 
 
                 if (st.session_state.screen_mode == "workspace"
