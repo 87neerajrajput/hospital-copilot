@@ -3,24 +3,9 @@ import uuid
 
 import streamlit as st
 
-from langgraph.types import Command
-
-from graph.workflow import build_graph
-
-from ui.dashboard.clinical_dashboard import ClinicalDashboard
-from utils.pdf_generator import generate_pdf
-
-from tools.db_tools import initialize_database
+#from tools.db_tools import initialize_database
 
 from assistants.therapist_chat import render_chat
-
-from components.assessment_upload import render_assessment_upload
-
-from document_processing.pdf_reader import extract_pdf_text
-
-from document_processing.text_cleaner import clean_pdf_text
-
-from assistants.assessment_extractor import extract_assessment_information
 
 from services.hospital_service import HospitalService
 
@@ -476,6 +461,8 @@ page = AppRouter.render()
 
 if page == AppPage.DASHBOARD:
 
+    from ui.dashboard.clinical_dashboard import ClinicalDashboard
+
     st.title("📊 Dashboard")
 
     current_patient = st.session_state.get(
@@ -507,9 +494,12 @@ elif page == AppPage.WORKSPACE:
 
     @st.cache_resource
     def get_graph():
+
+        from graph.workflow import build_graph
+        
         return build_graph()
 
-    graph = get_graph()
+    #graph = get_graph()
 
 
     # ==========================================
@@ -625,6 +615,8 @@ elif page == AppPage.WORKSPACE:
 
         st.divider()
 
+        from components.assessment_upload import render_assessment_upload
+
         render_assessment_upload()
 
     ###########################
@@ -633,6 +625,12 @@ elif page == AppPage.WORKSPACE:
         if st.session_state.assessment_pdf is not None:
 
             if st.session_state.assessment_summary is None:
+
+                from document_processing.pdf_reader import extract_pdf_text
+
+                from document_processing.text_cleaner import clean_pdf_text
+
+                from assistants.assessment_extractor import extract_assessment_information
 
                 raw_text = extract_pdf_text(
                     st.session_state.assessment_pdf
@@ -911,6 +909,8 @@ elif page == AppPage.WORKSPACE:
                 print(initial_state["assessment_summary"])
                 print("===================================\n")
 
+                graph = get_graph()
+
                 result = asyncio.run(
                     graph.ainvoke(
                         initial_state,
@@ -940,6 +940,8 @@ elif page == AppPage.WORKSPACE:
                 # st.write(result)
                 
                 # Check interrupt
+                graph = get_graph()
+
                 graph_state = graph.get_state(config)
 
                 state_values = graph_state.values
@@ -1002,6 +1004,8 @@ elif page == AppPage.WORKSPACE:
             st.session_state.workflow_started
             and st.session_state.screen_mode == "workspace"
         ):
+
+            graph = get_graph()
 
             graph_state = graph.get_state(config)
 
@@ -1220,6 +1224,9 @@ elif page == AppPage.WORKSPACE:
 
                         if st.button("✅ Approve Plan", use_container_width=True):
                             with st.spinner("Preparing clinical and parent reports..."):
+                                
+                                graph = get_graph()
+                                from langgraph.types import Command
 
                                 asyncio.run(
                                     graph.ainvoke(
@@ -1250,6 +1257,9 @@ elif page == AppPage.WORKSPACE:
                             "❌ Reject Plan",
                             use_container_width=True
                         ):
+                            
+                            graph = get_graph()
+                            from langgraph.types import Command
 
                             asyncio.run(
                                 graph.ainvoke(
@@ -1327,6 +1337,9 @@ elif page == AppPage.WORKSPACE:
 
 
                 if clinical_report and parent_report:
+                    
+                    from utils.pdf_generator import generate_pdf
+
                     clinical_pdf = generate_pdf(
                         "Clinical Report",
                         clinical_report

@@ -35,7 +35,6 @@ from copilot.approval import (
     ApprovalStatus,
 )
 from copilot.workflow_events import workflow_events
-from graph import state
 import uuid
 
 

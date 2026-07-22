@@ -2,8 +2,6 @@ import streamlit as st
 
 import asyncio
 
-from assistants.chat_assistant import ask_ai
-
 from ui.workflow_status import WorkflowStatus
 from copilot.workflow_events import workflow_events
 
