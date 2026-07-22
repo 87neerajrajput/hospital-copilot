@@ -17,7 +17,7 @@ from ui.dashboard.clinical_trajectory import ClinicalTrajectory
 from ui.dashboard.evidence.clinical_evidence_builder import (
     ClinicalEvidenceBuilder,
 )
-from services.llm_service import llm
+
 from services.hospital_service import HospitalService
 
 class ClinicalDashboard:
@@ -72,6 +72,9 @@ class ClinicalDashboard:
             evidence,
         )
 
+        from services.llm_service import get_llm
+        
+        llm = get_llm()
         response = llm.invoke(
             [
                 (

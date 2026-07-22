@@ -1,7 +1,6 @@
 
 from pydantic import BaseModel, Field
 from prompts.report_prompt import REPORT_SYSTEM_PROMPT
-from services.llm_service import llm
 from langchain_core.messages import SystemMessage, HumanMessage
 from graph.state import HealthcareState
 from typing import Optional
@@ -12,9 +11,6 @@ class Reports(BaseModel):
     clinical_report: Optional[str] = Field(default=None, description="Detailed clinical report")
 
     parent_report: Optional[str] = Field(default=None, description="Parent-friendly report")
-
-
-structured_llm = llm.with_structured_output(Reports)
 
 
 async def report_agent(state: HealthcareState):
@@ -239,6 +235,12 @@ async def report_agent(state: HealthcareState):
     Each Report should not be more than 700 words.
 
     """
+
+    from services.llm_service import get_llm
+
+    llm = get_llm()
+    
+    structured_llm = llm.with_structured_output(Reports)
     
     reports = structured_llm.invoke([
         SystemMessage(content=REPORT_SYSTEM_PROMPT),

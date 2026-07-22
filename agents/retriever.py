@@ -1,7 +1,7 @@
-from tools.rag_tools import retrieve_context
-
 
 def retrieval_agent(state):
+
+    from tools.rag_tools import retrieve_context
 
     diagnosis = state["patient_info"]["diagnosis"]
 

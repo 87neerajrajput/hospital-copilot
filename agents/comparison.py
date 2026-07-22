@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from prompts.comparison_prompt import COMPARISON_SYSTEM_PROMPT, EVOLUTION_SYSTEM_PROMPT, TREND_SYSTEM_PROMPT
-from services.llm_service import llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 class TherapyComparison(BaseModel):
@@ -55,18 +54,6 @@ class TherapyTrend(BaseModel):
 
     prognosis: str
 
-
-structured_llm = llm.with_structured_output(
-    TherapyComparison
-)
-
-structured_evolution_llm = llm.with_structured_output(
-    TherapyEvolution
-)
-
-trend_llm = llm.with_structured_output(
-    TherapyTrend
-)
 
 # ------------------------
 # Helper function
@@ -315,6 +302,13 @@ async def comparison_agent(
     Use professional clinical documentation language.
     """
 
+    from services.llm_service import get_llm
+
+    llm = get_llm()
+
+    structured_llm = llm.with_structured_output(
+        TherapyComparison
+    )
 
     comparison = structured_llm.invoke([
         SystemMessage(content=COMPARISON_SYSTEM_PROMPT),
@@ -349,6 +343,14 @@ def analyze_evolution(history):
 
     Return structured data only.
     """
+
+    from services.llm_service import get_llm
+
+    llm = get_llm()
+
+    structured_evolution_llm = llm.with_structured_output(
+        TherapyEvolution
+    )
 
     evolution = structured_evolution_llm.invoke(
         [
@@ -395,6 +397,14 @@ If insufficient evidence exists, explicitly state that.
 
 Return structured data only.
 """
+
+    from services.llm_service import get_llm
+
+    llm = get_llm()
+
+    trend_llm = llm.with_structured_output(
+        TherapyTrend
+    )
 
     trend = await trend_llm.ainvoke(
         [

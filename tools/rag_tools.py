@@ -1,18 +1,8 @@
 #from langchain_community.vectorstores import Chroma
-from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 
-load_dotenv()
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-CHROMA_DIR = str(BASE_DIR / "chroma_db")
-
-#CHROMA_DIR = "chroma_db"
-
-print("CHROMA EXISTS:", os.path.exists(CHROMA_DIR))
 
 _embeddings = None
 _vector_store = None
@@ -22,10 +12,25 @@ def get_vector_store():
     
 
     if _vector_store is None:
+
+        from dotenv import load_dotenv
+
+        load_dotenv()
+
+        BASE_DIR = Path(__file__).resolve().parent.parent
+        CHROMA_DIR = str(BASE_DIR / "chroma_db")
+
+        print("CHROMA EXISTS:", os.path.exists(CHROMA_DIR))
+
         print("Loading Gemini model...")
+
+        from langchain_chroma import Chroma
+        from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
         _embeddings = GoogleGenerativeAIEmbeddings(
             model="models/gemini-embedding-001"
         )
+
         print("Gemini Embedding model loaded.")
 
         _vector_store = Chroma(

@@ -1,18 +1,15 @@
 
-from dotenv import load_dotenv
-from langchain_groq import ChatGroq
+from functools import lru_cache
 
-# ==========================================================
-# Loading API KEY
-# ==========================================================
+@lru_cache(maxsize=1)
+def get_llm():
 
-load_dotenv()
+    from dotenv import load_dotenv
+    from langchain_groq import ChatGroq
 
-# ==========================================================
-# Shared LLM
-# ==========================================================
+    load_dotenv()
 
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    temperature=0,
-)
+    return ChatGroq(
+        model="llama-3.3-70b-versatile",
+        temperature=0,
+    )

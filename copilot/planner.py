@@ -19,7 +19,6 @@ Execution planning is handled by:
 """
 
 from pydantic import BaseModel, Field
-from services.llm_service import llm
 
 # ==========================================================
 # MODELS
@@ -33,14 +32,6 @@ class WorkflowRequest(BaseModel):
 
     entities: dict = Field(default_factory=dict)
 
-
-# ==========================================================
-# STRUCTURED OUTPUT
-# ==========================================================
-
-workflow_llm = llm.with_structured_output(
-    WorkflowRequest
-)
 
 # ==========================================================
 # BUILD WORKFLOW REQUEST
@@ -299,6 +290,17 @@ def build_workflow_request(
     {user_request}
     """
 
+    # ==========================================================
+    # STRUCTURED OUTPUT
+    # ==========================================================
+    from services.llm_service import get_llm
+
+    llm = get_llm()
+
+    workflow_llm = llm.with_structured_output(
+        WorkflowRequest
+    )
+    
     request = workflow_llm.invoke(prompt)
 
     request.intent = intent

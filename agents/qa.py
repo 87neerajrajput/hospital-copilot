@@ -1,6 +1,5 @@
 from typing import List
 from pydantic import BaseModel
-from services.llm_service import llm
 from prompts.qa_prompt import QA_SYSTEM_PROMPT
 from langchain_core.messages import SystemMessage, HumanMessage
 from graph.state import HealthcareState
@@ -24,9 +23,6 @@ class QAResult(BaseModel):
     issues: List[str]
 
     suggestions: List[str]
-
-
-structured_llm = llm.with_structured_output(QAResult)
 
 
 async def qa_agent(state: HealthcareState):
@@ -315,6 +311,11 @@ async def qa_agent(state: HealthcareState):
     - suggestions
     """
     
+    from services.llm_service import get_llm
+
+    llm = get_llm()
+    
+    structured_llm = llm.with_structured_output(QAResult)
 
     qa_result = structured_llm.invoke([
         SystemMessage(content=QA_SYSTEM_PROMPT),

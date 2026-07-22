@@ -5,7 +5,7 @@ from langchain_core.messages import (
     AIMessage,
 )
 from prompts.chat_assistant_prompt import CHAT_SYSTEM_PROMPT
-from services.llm_service import llm
+
 from hospital_mcp.hospital_client import mcp
 
 # ==========================================================
@@ -337,6 +337,10 @@ async def ask_ai(
         print(msg.content)
 
     print("\n==================================")
+
+    from services.llm_service import get_llm
+
+    llm = get_llm()
 
     response = llm.invoke(messages)
 

@@ -21,8 +21,6 @@ Execution planning is delegated to:
 
 from pydantic import BaseModel, Field
 
-from services.llm_service import llm
-
 from copilot.intent_registry import INTENTS
 
 from copilot.planner import build_workflow_request
@@ -50,11 +48,6 @@ class SupervisorDecision(BaseModel):
     )
 
     report_types: list[str] | None = None
-
-
-structured_llm = llm.with_structured_output(
-    SupervisorDecision
-)
 
 
 # ==========================================================
@@ -357,6 +350,14 @@ class ClinicalSupervisor:
         # --------------------------------------------------
         # 1. Intent Classification
         # --------------------------------------------------
+
+        from services.llm_service import get_llm
+
+        llm = get_llm()
+        
+        structured_llm = llm.with_structured_output(
+            SupervisorDecision
+        )
 
         decision = structured_llm.invoke(
 

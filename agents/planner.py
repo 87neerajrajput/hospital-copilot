@@ -1,6 +1,5 @@
 from typing import List
 from pydantic import BaseModel, Field
-from services.llm_service import llm
 from langchain_core.messages import SystemMessage, HumanMessage
 from prompts.agent_planner_prompt import PLANNER_SYSTEM_PROMPT
 from graph.state import HealthcareState
@@ -23,10 +22,6 @@ class TherapyPlan(BaseModel):
     weekly_schedule: List[WeeklyPlan]
     home_program: List[HomeProgramActivity]
 
-
-# 2. Create the structured wrapper
-# This forces the LLM to output data fitting the Pydantic schema perfectly
-structured_llm = llm.with_structured_output(TherapyPlan)
 
 # 4. Define your execution prompt
 async def planning_agent(state: HealthcareState, auto_save: bool = True):
@@ -221,6 +216,16 @@ async def planning_agent(state: HealthcareState, auto_save: bool = True):
 
     # 5. Invoke the structured model
     # The output is NOT a string or markdown text. It is a Python Pydantic Object.
+
+    # 2. Create the structured wrapper
+    # This forces the LLM to output data fitting the Pydantic schema perfectly
+    
+    from services.llm_service import get_llm
+
+    llm = get_llm()
+    
+    structured_llm = llm.with_structured_output(TherapyPlan)
+
     profile = structured_llm.invoke([
         SystemMessage(content=PLANNER_SYSTEM_PROMPT),
         HumanMessage(content=PROMPT)

@@ -1,7 +1,6 @@
 import json
 import re
 from pydantic import BaseModel
-from services.llm_service import llm
 
 # ======================================================
 # Output Schema
@@ -362,12 +361,11 @@ def extract_assessment_information(
     document: str,
 ) -> AssessmentSummary:
 
+    from services.llm_service import get_llm
+
     prompt = build_prompt(document)
 
-    # -------- DEBUG --------
-    # print("\n========== PROMPT ==========\n")
-    # print(prompt[:2500])
-    # print("\n============================\n")
+    llm = get_llm()
 
     response = llm.invoke(prompt)
 
