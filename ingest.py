@@ -1,21 +1,12 @@
-from pathlib import Path
-
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
-DATA_DIR = "data"
-CHROMA_DIR = "chroma_db"
 
 
 def load_documents():
+
+    from pathlib import Path
+
+    from config.settings import DATA_DIR
+
+    from langchain_community.document_loaders import TextLoader
 
     documents = []
 
@@ -35,6 +26,8 @@ def load_documents():
 
 def split_documents(documents):
 
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
         chunk_overlap=100
@@ -45,15 +38,20 @@ def split_documents(documents):
 
 def create_vector_store(chunks):
 
+    from langchain_chroma import Chroma
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+    from config.settings import CHROMA_DIR, EMBEDDING_MODEL
+
     embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001"
+            model=EMBEDDING_MODEL
         )
 
-    vector_store = Chroma.from_documents(
-            documents=chunks,
-            embedding=embeddings,
-            persist_directory=CHROMA_DIR
-        )
+    Chroma.from_documents(
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory=CHROMA_DIR
+    )
 
     print(f"\nStored {len(chunks)} chunks in Chroma")
 

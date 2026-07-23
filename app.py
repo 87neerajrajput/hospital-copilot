@@ -9,13 +9,14 @@ from assistants.therapist_chat import render_chat
 
 from services.hospital_service import HospitalService
 
+from config.settings import APP_TITLE
 
 # ==========================================
 # PAGE CONFIG
 # ==========================================
 
 st.set_page_config(
-    page_title="Paravartan Healthcare Copilot",
+    page_title=APP_TITLE,
     layout="wide"
 )
 

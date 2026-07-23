@@ -1,25 +1,8 @@
-import json
-import os
-from dotenv import load_dotenv
-import psycopg2
-
-load_dotenv()
 
 def get_connection():
-
-    database_url = os.getenv("DATABASE_URL")
-
-    if database_url:
-        conn = psycopg2.connect(database_url)
-    else:
-
-        conn = psycopg2.connect(
-            host=os.getenv("DB_HOST"),
-            database=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD")
-        )
-    #print('database_conn : ', conn)
+    from config.settings import DATABASE_URL
+    import psycopg2
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 
