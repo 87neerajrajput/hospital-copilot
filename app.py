@@ -11,6 +11,10 @@ from services.hospital_service import HospitalService
 
 from config.settings import APP_TITLE
 
+from config.logging import get_logger
+
+logger = get_logger(__name__)
+
 # ==========================================
 # PAGE CONFIG
 # ==========================================
@@ -162,7 +166,6 @@ def reset_application():
 # -----------------------------------------
 
 def summarize_therapy_plan(plan):
-    #print('plan: \n' ,plan)
 
     if not plan:
         return None
@@ -251,22 +254,24 @@ search_text = st.sidebar.text_input(
 
 if st.sidebar.button("🔍 Search"):
 
-    st.session_state.search_results = (
-        HospitalService.search_patients(search_text)
-    )
+    with st.sidebar.spinner("Searching"):
 
-    if st.session_state.search_results:
-
-        st.session_state.search_message = (
-            f"Found {len(st.session_state.search_results)} patient(s)."
+        st.session_state.search_results = (
+            HospitalService.search_patients(search_text)
         )
 
-    else:
+        if st.session_state.search_results:
 
-        st.session_state.search_message = (
-            "No matching patient record found. "
-            "Please create a new patient assessment."
-        )
+            st.session_state.search_message = (
+                f"Found {len(st.session_state.search_results)} patient(s)."
+            )
+
+        else:
+
+            st.session_state.search_message = (
+                "No matching patient record found. "
+                "Please create a new patient assessment."
+            )
 
 
 # Display message outside button block
@@ -307,60 +312,63 @@ if st.session_state.search_results:
 
         if st.sidebar.button("📂 Load Patient"):
 
-            patient_id = (
-                patient_options[selected_label]
-            )
+            # The spinner shows inside this block and disappears when finished
+            with st.sidebar.spinner("Loading"):
 
-            patient = HospitalService.get_patient(patient_id)
-
-            st.session_state.selected_patient_id = (
-                patient_id
-            )
-
-            st.session_state.patient_plans = (
-                HospitalService.get_patient_plans(patient_id)
-            )
-
-            st.session_state.loaded_patient = patient
-
-            # Clear previously viewed plan
-            st.session_state.selected_plan = None
-            st.session_state.selected_plan_label = None
-
-            #clear the search message
-            st.session_state.search_message = None
-
-            st.session_state.patient_name = (
-                patient["name"]
-            )
-
-            st.session_state.age = (
-                patient["age"]
-            )
-
-            st.session_state.diagnosis = (
-                patient["diagnosis"]
-            )
-
-            st.session_state.primary_concerns = (
-                "\n".join(
-                    patient["concerns"]
+                patient_id = (
+                    patient_options[selected_label]
                 )
-            )
 
-            st.success(
-                "Patient loaded successfully."
-            )
+                patient = HospitalService.get_patient(patient_id)
 
-            # Loading a patient should reset the UI to a clean workspace ready for a new session.
-            st.session_state.screen_mode = "workspace"
-            st.session_state.workflow_started = False
+                st.session_state.selected_patient_id = (
+                    patient_id
+                )
 
-            # Hide any previously viewed history
-            st.session_state.selected_plan = None
-            st.session_state.current_patient = patient
+                st.session_state.patient_plans = (
+                    HospitalService.get_patient_plans(patient_id)
+                )
 
-            st.rerun()
+                st.session_state.loaded_patient = patient
+
+                # Clear previously viewed plan
+                st.session_state.selected_plan = None
+                st.session_state.selected_plan_label = None
+
+                #clear the search message
+                st.session_state.search_message = None
+
+                st.session_state.patient_name = (
+                    patient["name"]
+                )
+
+                st.session_state.age = (
+                    patient["age"]
+                )
+
+                st.session_state.diagnosis = (
+                    patient["diagnosis"]
+                )
+
+                st.session_state.primary_concerns = (
+                    "\n".join(
+                        patient["concerns"]
+                    )
+                )
+
+                st.success(
+                    "Patient loaded successfully."
+                )
+
+                # Loading a patient should reset the UI to a clean workspace ready for a new session.
+                st.session_state.screen_mode = "workspace"
+                st.session_state.workflow_started = False
+
+                # Hide any previously viewed history
+                st.session_state.selected_plan = None
+                st.session_state.current_patient = patient
+
+                st.rerun()
 
 # ==========================================
 # PATIENT HISTORY
@@ -397,58 +405,56 @@ if st.session_state.selected_patient_id:
         # Load Plan
         if st.sidebar.button("📖 View Plan"):
 
-            plan_id = (
-                plan_options[
-                    selected_plan_label
-                ]
-            )
+            if selected_plan_label is None:
+                st.sidebar.error("Please select a plan first.")
 
-            plan =  HospitalService.get_therapy_plan(plan_id)
+            else:
 
-            st.session_state.selected_plan = plan["therapy_plan"]
+                # The spinner shows inside this block and disappears when finished
+                with st.sidebar.spinner("Loading plan"):
+                    plan_id = (
+                        plan_options[
+                            selected_plan_label
+                        ]
+                    )
 
-            # For chat context
-            st.session_state.therapy_plan = plan["therapy_plan"]
+                    plan =  HospitalService.get_therapy_plan(plan_id)
 
-            therapy_summary = summarize_therapy_plan(plan)
-            
-            st.session_state.therapy_plan_summary = (
-                therapy_summary
-            )
+                    st.session_state.selected_plan = plan["therapy_plan"]
 
-            patient_snapshot = plan["patient_info"].copy()
+                    # For chat context
+                    st.session_state.therapy_plan = plan["therapy_plan"]
 
-            patient_snapshot["therapy_plan"] = therapy_summary
+                    therapy_summary = summarize_therapy_plan(plan)
+                    
+                    st.session_state.therapy_plan_summary = (
+                        therapy_summary
+                    )
 
-            st.session_state.current_patient = patient_snapshot
+                    patient_snapshot = plan["patient_info"].copy()
 
-            patient = plan["patient_info"]
+                    patient_snapshot["therapy_plan"] = therapy_summary
 
-            st.session_state.patient_name = patient["name"]
-            st.session_state.age = patient["age"]
-            st.session_state.diagnosis = patient["diagnosis"]
-            st.session_state.primary_concerns = "\n".join(
-                patient["concerns"]
-            )
+                    st.session_state.current_patient = patient_snapshot
 
-            # Switch to history mode
-            st.session_state.screen_mode = "history"
+                    patient = plan["patient_info"]
 
-            # Leave the current workspace
-            st.session_state.workflow_started = False
-            st.session_state.waiting_for_approval = False
-            st.session_state.reports_generated = False
+                    st.session_state.patient_name = patient["name"]
+                    st.session_state.age = patient["age"]
+                    st.session_state.diagnosis = patient["diagnosis"]
+                    st.session_state.primary_concerns = "\n".join(
+                        patient["concerns"]
+                    )
 
-            # Leave history mode
-            #st.session_state.plan_generated = False
-            
-            # Clear current workspace
-            # st.session_state.therapy_plan = None
-            # st.session_state.qa_result = None
-            # st.session_state.clinical_report = None
-            # st.session_state.parent_report = None
+                    # Switch to history mode
+                    st.session_state.screen_mode = "history"
 
-            st.rerun()
+                    # Leave the current workspace
+                    st.session_state.workflow_started = False
+                    st.session_state.waiting_for_approval = False
+                    st.session_state.reports_generated = False
+
+                    st.rerun()
     else:
 
         st.sidebar.info(
@@ -906,9 +912,9 @@ elif page == AppPage.WORKSPACE:
                     "next_agent": ""
                 }
 
-                print("\n========== INITIAL STATE ==========")
-                print(initial_state["assessment_summary"])
-                print("===================================\n")
+                logger.info("\n========== INITIAL STATE ==========")
+                logger.info(initial_state["assessment_summary"])
+                logger.info("===================================\n")
 
                 graph = get_graph()
 
@@ -921,7 +927,7 @@ elif page == AppPage.WORKSPACE:
 
                 st.session_state.plan_generated = True
 
-                print("Selected_patient_id in app : \n",  st.session_state.selected_patient_id)
+                logger.info("Selected_patient_id in app : \n",  st.session_state.selected_patient_id)
 
                 # Select Plan Dropdown updates automatically without needing to reload the patient.
                 if st.session_state.selected_patient_id:
@@ -952,7 +958,7 @@ elif page == AppPage.WORKSPACE:
                 if new_patient_id:
                     st.session_state.selected_patient_id = new_patient_id
 
-                print("**************patient_id in graph***************\n", st.session_state.selected_patient_id)
+                logger.info("**************patient_id in graph***************\n", st.session_state.selected_patient_id)
 
                 if state_values:
 
@@ -967,7 +973,6 @@ elif page == AppPage.WORKSPACE:
                     if patient_info:
 
                         patient = patient_info.copy()
-                        print("who :\n ", patient)
 
                         if therapy_plan:
 
@@ -986,7 +991,7 @@ elif page == AppPage.WORKSPACE:
                             patient["assessment_summary"] = assessment_summary
                             
                         st.session_state.current_patient = patient
-                        print("who and what : \n",  st.session_state.current_patient)
+                        logger.info("Current patient : \n",  st.session_state.current_patient)
 
                 # st.write("STATE")
                 # st.write(graph_state)

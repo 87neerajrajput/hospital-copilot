@@ -10,9 +10,13 @@ def get_vector_store():
 
         from config.settings import CHROMA_DIR, EMBEDDING_MODEL
 
-        print("CHROMA EXISTS:", CHROMA_DIR)
+        from config.logging import get_logger
 
-        print("Loading embedding model: ", EMBEDDING_MODEL)
+        logger = get_logger(__name__)
+
+        logger.info("CHROMA DB EXISTS:  %s", CHROMA_DIR)
+
+        logger.info("Loading embedding model:  %s", EMBEDDING_MODEL)
 
         from langchain_chroma import Chroma
         from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -21,7 +25,7 @@ def get_vector_store():
             model=EMBEDDING_MODEL
         )
 
-        print("Embedding model loaded.")
+        logger.info("Embedding model loaded.")
 
         _vector_store = Chroma(
             persist_directory=CHROMA_DIR,

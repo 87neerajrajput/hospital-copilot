@@ -12,6 +12,10 @@ def get_connection():
 
 def initialize_database():
 
+    from config.logging import get_logger
+
+    logger = get_logger(__name__)
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -75,7 +79,7 @@ def initialize_database():
     cursor.close()
     conn.close()
 
-    print("Database initialized successfully.")
+    logger.info("Database initialized successfully.")
     
 
 # def save_patient(patient_info):
